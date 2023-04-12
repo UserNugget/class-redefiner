@@ -1,0 +1,11 @@
+plugins {
+  id 'application'
+}
+
+dependencies {
+  implementation rootProject
+}
+
+application {
+  mainClass = 'kk.examples.SimpleExample'
+}

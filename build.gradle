@@ -1,0 +1,56 @@
+plugins {
+  id 'maven-publish'
+}
+
+allprojects {
+  apply plugin: 'java-library'
+
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
+  }
+
+  java {
+    // TODO: looks like Java 8 missing some classes, that needed for this library
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+
+    withSourcesJar()
+  }
+
+  test {
+    useJUnitPlatform()
+  }
+}
+
+dependencies {
+  implementation 'org.ow2.asm:asm:9.5'
+  implementation 'org.ow2.asm:asm-tree:9.5'
+  implementation 'org.ow2.asm:asm-util:9.5'
+  implementation 'org.ow2.asm:asm-commons:9.5'
+}
+
+publishing {
+  repositories {
+    maven {
+      name = "GitHubPackages"
+      url = uri("https://maven.pkg.github.com/UserNugget/class-redefiner")
+      credentials {
+        username = "UserNugget"
+        password = System.getenv("TOKEN")
+      }
+    }
+  }
+
+  publications {
+    gpr(MavenPublication) {
+      from(components.java)
+    }
+  }
+}
+
+group = 'kk'
+version = '0.0.1'

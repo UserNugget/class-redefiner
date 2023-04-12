@@ -1,0 +1,3 @@
+rootProject.name = 'class-redefiner'
+
+include("examples")
