@@ -84,8 +84,18 @@ public class CodeGenerator {
     });
   }
 
+  private boolean forceCreate;
+
   private ClassFile magicClass, magicInterface;
   private ClassField impl;
+
+  public CodeGenerator() {
+    this(false);
+  }
+
+  public CodeGenerator(boolean forceCreate) {
+    this.forceCreate = forceCreate;
+  }
 
   public ClassFile getGeneratedClass() { return this.magicClass; }
   public ClassFile getGeneratedInterface() { return this.magicInterface; }
@@ -191,7 +201,7 @@ public class CodeGenerator {
 
   private ClassMethod create(String methodName, String methodDesc, int access) {
     int varargs = access & ACC_VARARGS;
-    if (Modifier.isPublic(access)) {
+    if (Modifier.isPublic(access) && !this.forceCreate) {
       return this.magicInterface.visitMethod(ACC_PUBLIC | ACC_STATIC | varargs, methodName + STATIC, methodDesc);
     }
 
