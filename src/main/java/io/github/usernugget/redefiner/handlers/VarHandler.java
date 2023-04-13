@@ -40,7 +40,8 @@ public class VarHandler implements AnnotationHandler {
     if (argMapping == -1) {
       String expectedName = args.getString("name");
       if (expectedName == null || expectedName.isEmpty()) {
-        if(mappingMethod.localVariables == null) {
+        if(mappingMethod.localVariables == null ||
+           mappingMethod.localVariables.isEmpty()) {
           throw new IllegalStateException(
              "missing local variables in mapping method " + desc(mappingClass, mappingMethod)
           );
@@ -49,7 +50,8 @@ public class VarHandler implements AnnotationHandler {
         expectedName = mappingMethod.localVariables.get(argIndex).name;
       }
 
-      if (targetMethod.localVariables == null) {
+      if (targetMethod.localVariables == null ||
+          targetMethod.localVariables.isEmpty()) {
         throw new IllegalStateException(
            "missing local variables in target method " + targetMethod
         );
