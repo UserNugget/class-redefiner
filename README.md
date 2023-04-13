@@ -3,12 +3,12 @@ Experimental library to modify classes at runtime using [ASM](https://asm.ow2.io
 
 ## Current issues
 - [CDS](https://openjdk.org/jeps/310) will ignore modified classes
-- Injected code will use modified class classloader, so they can be accessed only from it
+- Injected code will use modified class classloader and so can be accessed only from it
 - Currently working only with Java 11+
 
 ## Getting started
 
-1) Add maven repository
+1) Add Maven repository
    + Using Gradle
      ```groovy
      maven { url = uri("https://maven.pkg.github.com/UserNugget/class-redefiner") }
