@@ -143,7 +143,7 @@ public class CodeGenerator {
     insts.get(owner, field);
     insts.returnOp(Type.getType(field.desc));
 
-    return this.magicInterface.findMethod(methodName, methodDesc);
+    return findInterfaceMethod(methodName, methodDesc);
   }
 
   public ClassMethod fieldSetter(ClassFile owner, ClassField field) {
@@ -164,7 +164,7 @@ public class CodeGenerator {
     insts.put(owner, field);
     insts.op(RETURN);
 
-    return this.magicInterface.findMethod(methodName, methodDesc);
+    return findInterfaceMethod(methodName, methodDesc);
   }
 
   public ClassMethod methodInvoker(ClassFile owner, ClassMethod method) {
@@ -185,7 +185,7 @@ public class CodeGenerator {
     insts.invoke(owner, method);
     insts.returnOp(Type.getReturnType(method.desc));
 
-    return this.magicInterface.findMethod(methodName, methodDesc);
+    return findInterfaceMethod(methodName, methodDesc);
   }
 
   private ClassMethod create(String methodName, String methodDesc, int access) {
@@ -222,15 +222,18 @@ public class CodeGenerator {
     }
 
     Class<?> magicInterface = ClassIO.define(this.magicInterface, classLoader, ClassWriter.COMPUTE_FRAMES);
-    if (this.magicClass.fields().size() > 1) {
+    if (this.magicClass.methods().size() > 1) {
       Class<?> accessKlass = ClassIO.define(this.magicClass, wrapClassLoader(classLoader), ClassWriter.COMPUTE_FRAMES);
       try {
         Field impl = magicInterface.getDeclaredField("IMPL");
 
+        Constructor<?> constructor = accessKlass.getConstructor();
+        constructor.setAccessible(true);
+
         JavaInternals.UNSAFE.putObject(
            JavaInternals.UNSAFE.staticFieldBase(impl),
            JavaInternals.UNSAFE.staticFieldOffset(impl),
-           accessKlass.getConstructor().newInstance()
+           constructor.newInstance()
         );
       } catch (NoSuchFieldException | InvocationTargetException | InstantiationException |
                IllegalAccessException | NoSuchMethodException e) {
