@@ -30,7 +30,6 @@ import java.lang.annotation.Target;
  * 1) Static final constant fields (like {@code FIELD = 1 << 1;} or {@code FIELD = true;})
  * will be inlined by the compiler, so cannot be wrapped
  */
-
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface GetField {

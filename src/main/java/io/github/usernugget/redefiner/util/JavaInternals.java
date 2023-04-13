@@ -52,13 +52,6 @@ public final class JavaInternals {
 
       if(CLASS_MAJOR_VERSION >= 53) {
         Class<?> internalUnsafe = Class.forName("jdk.internal.misc.Unsafe");
-        Class<?> moduleClass = Class.forName("java.lang.Module");
-
-        Object module = TRUSTED_LOOKUP.findVirtual(
-           Class.class, "getModule",
-           MethodType.methodType(moduleClass)
-        ).invoke(internalUnsafe);
-
         UNSAFE_OBJECT = TRUSTED_LOOKUP.findStatic(
            internalUnsafe,
            "getUnsafe",
