@@ -16,14 +16,15 @@
 
 package io.github.usernugget.redefiner.instrumentation;
 
-import com.sun.tools.attach.VirtualMachine;
+import io.github.usernugget.redefiner.util.Java8Tools;
+import io.github.usernugget.redefiner.util.JavaInternals;
 import io.github.usernugget.redefiner.util.asm.ClassIO;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
-import io.github.usernugget.redefiner.util.JavaInternals;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -101,10 +102,28 @@ public enum JavaAgent {
 
   private static String getProcessId() {
     if(JavaInternals.CLASS_MAJOR_VERSION >= 53) {
-      return Long.toString(ProcessHandle.current().pid());
+      try {
+        // Long.toString(ProcessHandle.current().pid())
+        Class<?> processHandleClass = Class.forName("java.lang.ProcessHandle");
+        Object processHandle = processHandleClass.getMethod("current").invoke(null);
+        return Long.toString((Long) processHandleClass.getMethod("pid").invoke(processHandle));
+      } catch (Throwable throwable) {
+        throw new IllegalStateException("failed to get process id", throwable);
+      }
     } else {
-      // TODO: Java 8 support
-      throw new IllegalStateException();
+      String name = ManagementFactory.getRuntimeMXBean().getName();
+      try {
+        int index = name.indexOf('@');
+        if (index == -1) {
+          throw new IllegalStateException("failed to parse process id from " + name);
+        }
+
+        String processId = name.substring(0, index);
+        Long.parseLong(processId); // verify process id
+        return processId;
+      } catch (Throwable throwable) {
+        throw new IllegalStateException("failed to parse process id from " + name, throwable);
+      }
     }
   }
 
@@ -122,9 +141,17 @@ public enum JavaAgent {
 
       new JarOutputStream(Files.newOutputStream(tmpFile), manifest).close();
 
-      VirtualMachine vm = VirtualMachine.attach(getProcessId());
-      vm.loadAgent(tmpFile.toString());
-      vm.detach();
+      Class<?> vmClass = Java8Tools.vmClass;
+      if (vmClass == null) {
+        vmClass = Class.forName("com.sun.tools.attach.VirtualMachine");
+      }
+
+      Object vm = vmClass.getDeclaredMethod("attach", String.class).invoke(null, getProcessId());
+      try {
+        vmClass.getMethod("loadAgent", String.class).invoke(vm, tmpFile.toString());
+      } finally {
+        vmClass.getMethod("detach").invoke(vm);
+      }
     } finally {
       Files.deleteIfExists(tmpFile);
     }

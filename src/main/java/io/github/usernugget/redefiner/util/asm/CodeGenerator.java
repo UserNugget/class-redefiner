@@ -61,8 +61,14 @@ public class CodeGenerator {
 
   static {
     try {
+      String delegatingClassLoader;
+      if (JavaInternals.CLASS_MAJOR_VERSION >= 53) {
+        delegatingClassLoader = "jdk.internal.reflect.DelegatingClassLoader";
+      } else {
+        delegatingClassLoader = "sun.reflect.DelegatingClassLoader";
+      }
       CLASS_LOADER_CONSTRUCTOR = JavaInternals.TRUSTED_LOOKUP.findConstructor(
-         Class.forName("jdk.internal.reflect.DelegatingClassLoader"),
+         Class.forName(delegatingClassLoader),
          MethodType.methodType(void.class, ClassLoader.class)
       );
     } catch (NoSuchMethodException | IllegalAccessException | ClassNotFoundException e) {

@@ -19,11 +19,11 @@ package io.github.usernugget.redefiner.tests.impl;
 import io.github.usernugget.redefiner.annotation.Head;
 import io.github.usernugget.redefiner.annotation.Mapping;
 import io.github.usernugget.redefiner.op.Op;
-import io.github.usernugget.redefiner.throwable.RedefineFailedException;
 import io.github.usernugget.redefiner.tests.AbstractTest;
+import io.github.usernugget.redefiner.throwable.RedefineFailedException;
 import org.junit.jupiter.api.Test;
 import java.nio.charset.Charset;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestInternalClasses extends AbstractTest {
@@ -36,19 +36,15 @@ public class TestInternalClasses extends AbstractTest {
 
     REDEFINER.applyMapping(StringMapping.class);
 
-    assertDoesNotThrow(
-       () -> "Hello world!".getBytes((Charset) null)
-    );
+    assertArrayEquals(new byte[0], "Hello world!".getBytes((Charset) null));
   }
 
   @Mapping(String.class) // String has null ClassLoader
   public static final class StringMapping {
-    byte[] value;
-
     @Head(method = "getBytes(Ljava/nio/charset/Charset;)[B")
     public void getBytes(Charset charset) {
       if(charset == null) {
-        Op.returnValue(this.value);
+        Op.returnValue(new byte[0]);
       }
     }
   }

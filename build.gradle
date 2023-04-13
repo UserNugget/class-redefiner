@@ -15,9 +15,8 @@ allprojects {
   }
 
   java {
-    // TODO: Java 8 is missing some classes that are required for this library
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 
     withSourcesJar()
     withJavadocJar()
@@ -33,6 +32,11 @@ dependencies {
   implementation 'org.ow2.asm:asm-tree:9.5'
   implementation 'org.ow2.asm:asm-util:9.5'
   implementation 'org.ow2.asm:asm-commons:9.5'
+
+  int classVersion = (int) Double.parseDouble(System.getProperty("java.class.version"));
+  if (classVersion < 53) {
+    compileOnly files("${System.getProperty("java.home")}/../lib/tools.jar")
+  }
 }
 
 group = "io.github.usernugget"
