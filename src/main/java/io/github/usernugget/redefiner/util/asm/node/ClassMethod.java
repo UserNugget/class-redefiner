@@ -35,7 +35,7 @@ import static org.objectweb.asm.Opcodes.LLOAD;
 import static org.objectweb.asm.Opcodes.LSTORE;
 
 public class ClassMethod extends MethodNode {
-  // Hide superclass methods
+  // Hide superclass fields
   private byte instructions;
 
   public ClassMethod() {

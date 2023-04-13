@@ -31,7 +31,7 @@ import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.RETURN;
 
 public class ClassFile extends ClassNode {
-  // Hide superclass methods
+  // Hide superclass fields
   private byte fields, methods;
 
   public ClassFile() {
