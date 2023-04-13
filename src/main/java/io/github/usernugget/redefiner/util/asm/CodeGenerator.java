@@ -27,6 +27,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -213,6 +214,10 @@ public class CodeGenerator {
   }
 
   public void define(ClassLoader classLoader) {
+    define(classLoader, classLoader);
+  }
+
+  public void define(ClassLoader magicInterfaceLoader, ClassLoader magicClassLoader) {
     if (this.magicClass == null) {
       return;
     }
@@ -221,9 +226,9 @@ public class CodeGenerator {
       this.magicInterface.removeField(this.impl);
     }
 
-    Class<?> magicInterface = ClassIO.define(this.magicInterface, classLoader, ClassWriter.COMPUTE_FRAMES);
+    Class<?> magicInterface = ClassIO.define(this.magicInterface, magicInterfaceLoader, ClassWriter.COMPUTE_FRAMES);
     if (this.magicClass.methods().size() > 1) {
-      Class<?> accessKlass = ClassIO.define(this.magicClass, wrapClassLoader(classLoader), ClassWriter.COMPUTE_FRAMES);
+      Class<?> accessKlass = ClassIO.define(this.magicClass, wrapClassLoader(magicClassLoader), ClassWriter.COMPUTE_FRAMES);
       try {
         Field impl = magicInterface.getDeclaredField("IMPL");
 
