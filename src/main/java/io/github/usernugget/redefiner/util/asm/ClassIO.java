@@ -47,13 +47,18 @@ public class ClassIO {
   }
 
   public static ClassFile fromClass(Class<?> klass) {
+    return fromClass(klass, ClassReader.SKIP_FRAMES);
+  }
+
+  public static ClassFile fromClass(Class<?> klass, int options) {
     try {
       ClassLoader classLoader = klass.getClassLoader();
       if (classLoader == null) {
         classLoader = ClassLoader.getSystemClassLoader();
       }
 
-      return fromInputStream(classLoader.getResourceAsStream(klass.getName().replace('.', '/') + ".class"));
+      InputStream classResource = classLoader.getResourceAsStream(klass.getName().replace('.', '/') + ".class");
+      return fromInputStream(classResource, options);
     } catch (Throwable throwable) {
       throw new IllegalStateException("failed to read " + klass.getName(), throwable);
     }
@@ -64,12 +69,20 @@ public class ClassIO {
   }
 
   public static ClassFile fromInputStream(InputStream is) throws IOException {
-    return fromClassReader(new ClassReader(is));
+    return fromInputStream(is, ClassReader.SKIP_FRAMES);
+  }
+
+  public static ClassFile fromInputStream(InputStream is, int options) throws IOException {
+    return fromClassReader(new ClassReader(is), options);
   }
 
   public static ClassFile fromClassReader(ClassReader classReader) {
+    return fromClassReader(classReader, ClassReader.SKIP_FRAMES);
+  }
+
+  public static ClassFile fromClassReader(ClassReader classReader, int options) {
     ClassFile classFile = new ClassFile();
-    classReader.accept(classFile, ClassReader.SKIP_FRAMES);
+    classReader.accept(classFile, options);
     return classFile;
   }
 
