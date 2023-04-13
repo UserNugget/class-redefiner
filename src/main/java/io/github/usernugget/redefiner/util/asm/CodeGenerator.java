@@ -119,7 +119,7 @@ public class CodeGenerator {
       );
       this.magicClass.interfaces = Collections.singletonList(this.magicInterface.name);
 
-      this.impl = this.magicInterface.visitField(ACC_STATIC | ACC_FINAL, "IMPL", "L" + this.magicInterface.name + ";");
+      this.impl = this.magicInterface.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, "IMPL", "L" + this.magicInterface.name + ";");
     }
   }
 
