@@ -7,5 +7,5 @@ dependencies {
 }
 
 application {
-  mainClass = 'kk.examples.SimpleExample'
+  mainClass = 'io.github.usernugget.examples.SimpleExample'
 }

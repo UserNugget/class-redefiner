@@ -1,5 +1,6 @@
 plugins {
   id 'maven-publish'
+  id 'signing'
 }
 
 allprojects {
@@ -14,11 +15,12 @@ allprojects {
   }
 
   java {
-    // TODO: looks like Java 8 missing some classes, that needed for this library
+    // TODO: Java 8 is missing some classes that are required for this library
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 
     withSourcesJar()
+    withJavadocJar()
   }
 
   test {
@@ -33,24 +35,57 @@ dependencies {
   implementation 'org.ow2.asm:asm-commons:9.5'
 }
 
-publishing {
-  repositories {
-    maven {
-      name = "GitHubPackages"
-      url = uri("https://maven.pkg.github.com/UserNugget/class-redefiner")
-      credentials {
-        username = "UserNugget"
-        password = System.getenv("TOKEN")
-      }
-    }
-  }
+group = "io.github.usernugget"
+version = "1.0.0"
 
+publishing {
   publications {
-    gpr(MavenPublication) {
-      from(components.java)
+    mavenJava(MavenPublication) {
+      from components.java
+
+      repositories {
+        maven {
+          url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+          credentials {
+            username = System.getenv("OSSRH_USERNAME")
+            password = System.getenv("OSSRH_PASSWORD")
+          }
+        }
+      }
+
+      pom {
+        name = 'class-redefiner'
+        description = "Library to modify classes at runtime"
+        url = 'https://github.com/UserNugget/class-redefiner/'
+
+        developers {
+          developer {
+            id = 'usernugget'
+          }
+        }
+
+        scm {
+          connection = 'scm:git:git://github.com/UserNugget/class-redefiner/'
+          developerConnection = 'scm:git:ssh://github.com:UserNugget/class-redefiner.git'
+          url = 'https://github.com/UserNugget/class-redefiner/tree/main/'
+        }
+
+        licenses {
+          license {
+            name = 'The Apache License, Version 2.0'
+            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+      }
     }
   }
 }
 
-group = 'kk'
-version = '0.0.1'
+signing {
+  useInMemoryPgpKeys(
+    System.getenv("PGP_SIGNING_KEY"),
+    System.getenv("PGP_SIGNING_KEY_PASSPHRASE")
+  )
+
+  sign publishing.publications.mavenJava
+}

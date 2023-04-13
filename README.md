@@ -1,5 +1,5 @@
 # class-redefiner
-Experimental library to modify classes at runtime using [ASM](https://asm.ow2.io/) and Java Agent (Instrumentation)
+Library to modify classes at runtime using [ASM](https://asm.ow2.io/) and Java Agent (Instrumentation)
 
 ## Current issues
 - [CDS](https://openjdk.org/jeps/310) will ignore modified classes
@@ -8,33 +8,18 @@ Experimental library to modify classes at runtime using [ASM](https://asm.ow2.io
 
 ## Getting started
 
-1) Add Maven repository
+1) Add dependency
    + Using Gradle
      ```groovy
-     maven { url = uri("https://maven.pkg.github.com/UserNugget/class-redefiner") }
-     ```
-
-   + Using Maven
-     ```xml
-     <repository>
-       <id>class-redefiner</id>
-       <name>class-redefiner repo</name>
-       <url>https://maven.pkg.github.com/UserNugget/class-redefiner</url>
-     </repository>
-     ```
-
-2) Add dependency
-   + Using Gradle
-     ```groovy
-     implementation("kk:class-redefiner:0.0.1")
+     implementation("io.github.usernugget:class-redefiner:1.0.0")
      ```
 
    + Using Maven
      ```xml
      <dependency>
-       <groupId>kk</groupId>
+       <groupId>io.github.usernugget</groupId>
        <artifactId>class-redefiner</artifactId>
-       <version>0.0.1</version>
+       <version>1.0.0</version>
      </dependency>
      ```
 
