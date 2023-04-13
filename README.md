@@ -56,4 +56,4 @@ redefiner.applyMapping(ClassValueMapping.class);
 System.out.println("alwaysTrue is " + ClassValue.alwaysTrue());
 ```
 
-You can find more examples [here](https://github.com/UserNugget/class-redefiner/tree/main/examples/src/main/java/kk/examples)
+You can find more examples [here](https://github.com/UserNugget/class-redefiner/tree/main/examples/src/main/java/io/github/usernugget/redefiner/examples)
