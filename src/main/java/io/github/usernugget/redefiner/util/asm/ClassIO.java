@@ -101,7 +101,7 @@ public class ClassIO {
     try {
       return JavaInternals.defineClass(classFile.name, classBytes, 0, classBytes.length, classLoader, null);
     } catch (Throwable throwable) {
-      throw new Error("failed to define class. bytecode:\n" + classFile, throwable) {
+      throw new Error("failed to define class:\n" + classFile.toBytecodeString(), throwable) {
         @Override
         public synchronized Throwable fillInStackTrace() {
           return this;
