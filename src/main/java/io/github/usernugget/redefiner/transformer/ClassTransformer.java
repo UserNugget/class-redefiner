@@ -67,8 +67,9 @@ public class ClassTransformer implements ClassFileTransformer {
       return ClassIO.writeClass(owner, classLoader, ClassWriter.COMPUTE_FRAMES);
     } catch (Throwable throwable) {
       for (ClassTransformWrapper wrapper : wrappers) {
-        if(wrapper.getThrowable() != null) {
+        if(wrapper.getThrowable() == null) {
           wrapper.setThrowable(throwable);
+          break;
         }
       }
 
