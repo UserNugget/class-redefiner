@@ -85,6 +85,10 @@ public class Asm {
 
             if(isMethod) {
               MethodInsnNode methodNode = (MethodInsnNode) i;
+              ClassMethod classMethod = ownerClass.findMethod(methodNode.name, methodNode.desc);
+              if (classMethod == null) {
+                continue;
+              }
 
               crossGenerator.invoke(mappingInsts, i, crossGenerator.methodInvoker(
                  ownerClass, ownerClass.findMethod(methodNode.name, methodNode.desc)
@@ -92,6 +96,9 @@ public class Asm {
             } else {
               FieldInsnNode fieldNode = (FieldInsnNode) i;
               ClassField field = ownerClass.findField(fieldNode.name, fieldNode.desc);
+              if (field == null) {
+                continue;
+              }
 
               ClassMethod fieldOp;
               if(i.getOpcode() == GETSTATIC || i.getOpcode() == GETFIELD) {
@@ -105,7 +112,7 @@ public class Asm {
           }
         } catch (Throwable throwable) {
           throw new IllegalStateException(
-             "failed to inject wrappers between classloaders", throwable
+             "failed to inject code", throwable
           );
         }
       }
