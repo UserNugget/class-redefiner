@@ -70,7 +70,7 @@ public class CodeGenerator {
     }
   }
 
-  private static String newClassName() {
+  public static String newClassName() {
     return CLASS_NAME + "$Gen" + CLASS_COUNTER.getAndIncrement() + "_" + ID;
   }
 
