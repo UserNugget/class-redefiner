@@ -25,6 +25,7 @@ import io.github.usernugget.redefiner.throwable.RedefineFailedException;
 import io.github.usernugget.redefiner.transformer.ClassTransformWrapper;
 import io.github.usernugget.redefiner.transformer.ClassTransformer;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
+import io.github.usernugget.redefiner.util.asm.Asm;
 import io.github.usernugget.redefiner.util.asm.ClassIO;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.info.MethodInfo;
@@ -173,8 +174,10 @@ public class ClassRedefiner {
         }
       }
 
+      Asm.fixClassLoaders(mappingJavaClass, targetJavaClass, targetMethod);
+
       handler.handleMethod(
-         codeGenerator, new AnnotationValues(annotationNode),targetJavaClass,
+         codeGenerator, new AnnotationValues(annotationNode), targetJavaClass,
          targetAsmClass, mappingJavaClass, mappingAsmClass, targetMethod
       );
     };

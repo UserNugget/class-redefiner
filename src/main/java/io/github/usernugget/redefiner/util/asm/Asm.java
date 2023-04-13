@@ -16,9 +16,22 @@
 
 package io.github.usernugget.redefiner.util.asm;
 
+import io.github.usernugget.redefiner.util.asm.node.ClassField;
+import io.github.usernugget.redefiner.util.asm.node.ClassFile;
+import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
+import io.github.usernugget.redefiner.util.asm.node.Insts;
 import io.github.usernugget.redefiner.util.asm.node.immutable.ImmutableInsnNode;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
+import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
@@ -44,5 +57,74 @@ public class Asm {
 
   public static boolean isUnmoddedReturn(AbstractInsnNode insnNode) {
     return isReturn(insnNode.getOpcode()) && !(insnNode instanceof ImmutableInsnNode);
+  }
+
+  public static void fixClassLoaders(Class<?> mapping, Class<?> target, ClassMethod method) {
+    Map<Class<?>, ClassFile> classCache = new IdentityHashMap<>();
+    Set<ClassLoader> classLoaders = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    ClassLoader targetClassLoader = target.getClassLoader();
+    ClassLoader mappingClassLoader = mapping.getClassLoader();
+
+    CodeGenerator crossGenerator = new CodeGenerator(true);
+
+    Insts mappingInsts = method.insts();
+    for(AbstractInsnNode i : mappingInsts) {
+      boolean isMethod = i instanceof MethodInsnNode;
+      boolean isField = i instanceof FieldInsnNode;
+
+      if(isMethod || isField) {
+        try {
+          String owner = isMethod ? ((MethodInsnNode) i).owner : ((FieldInsnNode) i).owner;
+
+          Class<?> javaClass = Class.forName(owner.replace("/", "."), false, mappingClassLoader);
+          if(isInDifferentClassLoader(classLoaders, targetClassLoader, javaClass.getClassLoader())) {
+            ClassFile ownerClass = classCache.computeIfAbsent(
+               javaClass, key -> ClassIO.fromClass(key, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG)
+            );
+
+            if(isMethod) {
+              MethodInsnNode methodNode = (MethodInsnNode) i;
+
+              crossGenerator.invoke(mappingInsts, i, crossGenerator.methodInvoker(
+                 ownerClass, ownerClass.findMethod(methodNode.name, methodNode.desc)
+              ));
+            } else {
+              FieldInsnNode fieldNode = (FieldInsnNode) i;
+              ClassField field = ownerClass.findField(fieldNode.name, fieldNode.desc);
+
+              ClassMethod fieldOp;
+              if(i.getOpcode() == GETSTATIC || i.getOpcode() == GETFIELD) {
+                fieldOp = crossGenerator.fieldGetter(ownerClass, field);
+              } else {
+                fieldOp = crossGenerator.fieldSetter(ownerClass, field);
+              }
+
+              crossGenerator.invoke(mappingInsts, i, fieldOp);
+            }
+          }
+        } catch (Throwable throwable) {
+          throw new IllegalStateException(
+             "failed to inject wrappers between classloaders", throwable
+          );
+        }
+      }
+    }
+
+    crossGenerator.define(targetClassLoader, mappingClassLoader);
+  }
+
+  public static boolean isInDifferentClassLoader(
+     Set<ClassLoader> cache, ClassLoader first, ClassLoader second
+  ) {
+    cache.clear();
+
+    ClassLoader classLoader = first;
+    while(classLoader != null) {
+      cache.add(classLoader);
+      classLoader = classLoader.getParent();
+    }
+
+    return !cache.contains(second);
   }
 }
