@@ -3,7 +3,6 @@ Library to modify classes at runtime using [ASM](https://asm.ow2.io/) and Java A
 
 ## Current issues
 - [CDS](https://openjdk.org/jeps/310) will ignore modified classes
-- Injected code will use modified class classloader and so can be accessed only from it
 - Currently working only with Java 11+
 
 ## Getting started
