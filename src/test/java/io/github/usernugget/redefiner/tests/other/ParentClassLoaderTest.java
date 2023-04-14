@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.usernugget.redefiner.tests.impl;
+package io.github.usernugget.redefiner.tests.other;
 
 import io.github.usernugget.redefiner.annotation.Head;
 import io.github.usernugget.redefiner.annotation.Mapping;
@@ -22,11 +22,11 @@ import io.github.usernugget.redefiner.tests.AbstractTest;
 import io.github.usernugget.redefiner.throwable.RedefineFailedException;
 import org.junit.jupiter.api.Test;
 
-public class TestParentClassLoaders extends AbstractTest {
+public class ParentClassLoaderTest extends AbstractTest {
   public static boolean VALUE;
 
   @Test
-  void test() throws RedefineFailedException {
+  void testParent() throws RedefineFailedException {
     REDEFINER.applyMapping(TmpMapping.class);
     System.console();
   }
@@ -39,7 +39,7 @@ public class TestParentClassLoaders extends AbstractTest {
   public static final class TmpMapping {
     @Head
     public static void console() {
-      VALUE = TestParentClassLoaders.falseValue() && VALUE;
+      VALUE = ParentClassLoaderTest.falseValue() && VALUE;
     }
   }
 

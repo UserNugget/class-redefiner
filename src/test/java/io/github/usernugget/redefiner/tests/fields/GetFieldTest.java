@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.usernugget.redefiner.tests.impl;
+package io.github.usernugget.redefiner.tests.fields;
 
 import io.github.usernugget.redefiner.annotation.Head;
 import io.github.usernugget.redefiner.annotation.Mapping;
@@ -22,30 +22,33 @@ import io.github.usernugget.redefiner.op.Op;
 import io.github.usernugget.redefiner.tests.AbstractTest;
 import io.github.usernugget.redefiner.throwable.RedefineFailedException;
 import org.junit.jupiter.api.Test;
-import java.nio.charset.Charset;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class TestInternalClasses extends AbstractTest {
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class GetFieldTest extends AbstractTest {
   @Test
-  void redefineString() throws RedefineFailedException {
-    assertThrows(
-       NullPointerException.class,
-       () -> "Hello world!".getBytes((Charset) null)
-    );
-
-    REDEFINER.applyMapping(StringMapping.class);
-
-    assertArrayEquals(new byte[0], "Hello world!".getBytes((Charset) null));
+  void testGetField() throws RedefineFailedException {
+    assertTrue(Tmp.invoke());
+    REDEFINER.applyMapping(TmpMapping.class);
+    assertFalse(Tmp.invoke());
   }
 
-  @Mapping(String.class) // String has null ClassLoader
-  public static final class StringMapping {
-    @Head(method = "getBytes(Ljava/nio/charset/Charset;)[B")
-    public void getBytes(Charset charset) {
-      if(charset == null) {
-        Op.returnValue(new byte[0]);
-      }
+  @Mapping(Tmp.class)
+  public static final class TmpMapping {
+    static boolean field;
+
+    @Head
+    public static void invoke() {
+      Op.returnValue(!field);
+    }
+  }
+
+  public static final class Tmp {
+    public static boolean field = true;
+
+    public static boolean invoke() {
+      return field;
     }
   }
 }
