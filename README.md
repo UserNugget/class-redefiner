@@ -1,9 +1,8 @@
 # class-redefiner
 Library to modify classes at runtime using [ASM](https://asm.ow2.io/) and Java Agent (Instrumentation)
 
-## Current issues
+## Limitations
 - [CDS](https://openjdk.org/jeps/310) will ignore modified classes
-- Currently working only with Java 11+
 
 ## Getting started
 
