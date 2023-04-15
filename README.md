@@ -10,7 +10,7 @@ Library to modify classes at runtime using [ASM](https://asm.ow2.io/) and Java A
 1) Add dependency
    + Using Gradle
      ```groovy
-     implementation("io.github.usernugget:class-redefiner:1.0.0")
+     implementation("io.github.usernugget:class-redefiner:1.1.0")
      ```
 
    + Using Maven
@@ -18,7 +18,7 @@ Library to modify classes at runtime using [ASM](https://asm.ow2.io/) and Java A
      <dependency>
        <groupId>io.github.usernugget</groupId>
        <artifactId>class-redefiner</artifactId>
-       <version>1.0.0</version>
+       <version>1.1.0</version>
      </dependency>
      ```
 
