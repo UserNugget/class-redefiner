@@ -21,12 +21,11 @@ import org.objectweb.asm.tree.FieldNode;
 import static org.objectweb.asm.Opcodes.ASM9;
 
 public class ClassField extends FieldNode {
-  public ClassField(int access, String name, String descriptor, String signature, Object value) {
-    this(ASM9, access, name, descriptor, signature, value);
-  }
+  public ClassFile owner;
 
-  public ClassField(int api, int access, String name, String descriptor, String signature, Object value) {
-    super(api, access, name, descriptor, signature, value);
+  public ClassField(int access, ClassFile owner, String name, String descriptor, String signature, Object value) {
+    super(ASM9, access, name, descriptor, signature, value);
+    this.owner = owner;
   }
 
   public boolean isPackagePrivate() {

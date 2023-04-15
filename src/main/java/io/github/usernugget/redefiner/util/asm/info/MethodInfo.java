@@ -79,11 +79,11 @@ public class MethodInfo {
   }
 
   public ClassMethod findMethod(ClassFile classNode) {
-    return classNode.findMethod(this.name, this.desc);
+    return classNode.findDeclaredMethod(this.name, this.desc);
   }
 
   public ClassMethod findMethodOrThrow(ClassFile classNode) {
-    ClassMethod classMethod = classNode.findMethod(this.name, this.desc);
+    ClassMethod classMethod = classNode.findDeclaredMethod(this.name, this.desc);
     if (classMethod == null) {
       throw new IllegalStateException("method " + this.name + " not found in class " + classNode.name);
     }

@@ -21,11 +21,10 @@ import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
 import io.github.usernugget.redefiner.util.asm.node.Insts;
 import io.github.usernugget.redefiner.util.asm.node.immutable.ImmutableInsnNode;
+import io.github.usernugget.redefiner.util.cache.ClassCache;
 import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.Map;
 import java.util.Set;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -60,7 +59,7 @@ public class Asm {
   }
 
   public static void fixClassLoaders(Class<?> mapping, Class<?> target, ClassMethod method) {
-    Map<Class<?>, ClassFile> classCache = new IdentityHashMap<>();
+    ClassCache classCache = new ClassCache();
     Set<ClassLoader> classLoaders = Collections.newSetFromMap(new IdentityHashMap<>());
 
     ClassLoader targetClassLoader = target.getClassLoader();
@@ -79,23 +78,20 @@ public class Asm {
 
           Class<?> javaClass = Class.forName(owner.replace("/", "."), false, mappingClassLoader);
           if(isInDifferentClassLoader(classLoaders, targetClassLoader, javaClass.getClassLoader())) {
-            ClassFile ownerClass = classCache.computeIfAbsent(
-               javaClass, key -> ClassIO.fromClass(key, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG)
-            );
+            classCache.setClassLoader(javaClass.getClassLoader());
+            ClassFile ownerClass = classCache.findClass(javaClass);
 
             if(isMethod) {
               MethodInsnNode methodNode = (MethodInsnNode) i;
-              ClassMethod classMethod = ownerClass.findMethod(methodNode.name, methodNode.desc);
+              ClassMethod classMethod = ownerClass.findMethod(classCache, methodNode.name, methodNode.desc);
               if (classMethod == null) {
                 continue;
               }
 
-              crossGenerator.invoke(mappingInsts, i, crossGenerator.methodInvoker(
-                 ownerClass, ownerClass.findMethod(methodNode.name, methodNode.desc)
-              ));
+              crossGenerator.invoke(mappingInsts, i, crossGenerator.methodInvoker(ownerClass, classMethod));
             } else {
               FieldInsnNode fieldNode = (FieldInsnNode) i;
-              ClassField field = ownerClass.findField(fieldNode.name, fieldNode.desc);
+              ClassField field = ownerClass.findDeclaredField(fieldNode.name, fieldNode.desc);
               if (field == null) {
                 continue;
               }

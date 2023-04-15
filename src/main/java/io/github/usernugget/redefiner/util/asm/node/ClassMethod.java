@@ -35,16 +35,12 @@ import static org.objectweb.asm.Opcodes.LLOAD;
 import static org.objectweb.asm.Opcodes.LSTORE;
 
 public class ClassMethod extends MethodNode {
-  // Hide superclass fields
   private byte instructions;
+  public ClassFile owner;
 
-  public ClassMethod() {
-    super(ASM9);
-    super.instructions = new Insts();
-  }
-
-  public ClassMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+  public ClassMethod(int access, ClassFile owner, String name, String descriptor, String signature, String[] exceptions) {
     super(ASM9, access, name, descriptor, signature, exceptions);
+    this.owner = owner;
     super.instructions = new Insts();
   }
 
@@ -58,7 +54,7 @@ public class ClassMethod extends MethodNode {
 
   public ClassMethod copy() {
     ClassMethod newMethod = new ClassMethod(
-       this.access, this.name, this.desc, this.signature,
+       this.access, this.owner, this.name, this.desc, this.signature,
        this.exceptions == null ? null : this.exceptions.toArray(new String[0])
     );
     accept(newMethod);

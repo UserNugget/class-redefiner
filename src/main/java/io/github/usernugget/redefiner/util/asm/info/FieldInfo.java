@@ -68,11 +68,11 @@ public class FieldInfo {
   }
 
   public ClassField findField(ClassFile classNode) {
-    return classNode.findField(this.name, this.desc);
+    return classNode.findDeclaredField(this.name, this.desc);
   }
 
   public ClassField findFieldOrThrow(ClassFile classNode) {
-    ClassField classField = classNode.findField(this.name, this.desc);
+    ClassField classField = classNode.findDeclaredField(this.name, this.desc);
     if (classField == null) {
       throw new IllegalStateException("field " + this.name + " not found in class " + classNode.name);
     }

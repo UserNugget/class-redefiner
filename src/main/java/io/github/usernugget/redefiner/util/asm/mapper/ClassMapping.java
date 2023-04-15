@@ -66,7 +66,7 @@ public class ClassMapping {
   }
 
   public ClassMapping fieldMapping(ClassFile owner, String from, String to) {
-    return fieldMapping(owner, owner.findField(from, null), to);
+    return fieldMapping(owner, owner.findDeclaredField(from, null), to);
   }
 
   public ClassMapping fieldMapping(ClassFile owner, FieldNode from, String to) {

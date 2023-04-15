@@ -66,7 +66,7 @@ public class InjectHandler implements AnnotationHandler {
           continue;
         }
 
-        ClassMethod targetMethod = targetClass.findMethod(methodInst.name, methodInst.desc);
+        ClassMethod targetMethod = targetClass.findDeclaredMethod(methodInst.name, methodInst.desc);
         if (targetMethod != null && targetMethod.isPrivate()) {
           codeGenerator.invoke(
              mappingInsts, i,
@@ -81,7 +81,7 @@ public class InjectHandler implements AnnotationHandler {
           continue;
         }
 
-        ClassField ownerField = targetClass.findField(fieldInst.name, fieldInst.desc);
+        ClassField ownerField = targetClass.findDeclaredField(fieldInst.name, fieldInst.desc);
         if (ownerField != null && ownerField.isPrivate()) {
           ClassMethod fieldOp;
 

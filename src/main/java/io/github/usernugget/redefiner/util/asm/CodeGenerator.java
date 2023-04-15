@@ -130,12 +130,12 @@ public class CodeGenerator {
   }
 
   private ClassMethod findInterfaceMethod(String methodName, String methodDesc) {
-    ClassMethod previousGenerated = this.magicInterface.findMethod(methodName, methodDesc);
+    ClassMethod previousGenerated = this.magicInterface.findDeclaredMethod(methodName, methodDesc);
     if (previousGenerated != null) {
       return previousGenerated;
     }
 
-    return this.magicInterface.findMethod(methodName + STATIC, methodDesc);
+    return this.magicInterface.findDeclaredMethod(methodName + STATIC, methodDesc);
   }
 
   private String newMethodName(String owner, String desc, String name) {
@@ -157,7 +157,7 @@ public class CodeGenerator {
     Insts insts = generated.insts();
 
     insts.load(generated);
-    insts.get(owner, field);
+    insts.get(field);
     insts.returnOp(Type.getType(field.desc));
 
     return findInterfaceMethod(methodName, methodDesc);
@@ -178,7 +178,7 @@ public class CodeGenerator {
     Insts insts = generated.insts();
 
     insts.load(generated);
-    insts.put(owner, field);
+    insts.put(field);
     insts.op(RETURN);
 
     return findInterfaceMethod(methodName, methodDesc);
@@ -199,7 +199,7 @@ public class CodeGenerator {
     Insts insts = generated.insts();
 
     insts.load(generated);
-    insts.invoke(owner, method);
+    insts.invoke(method);
     insts.returnOp(Type.getReturnType(method.desc));
 
     return findInterfaceMethod(methodName, methodDesc);
@@ -217,9 +217,9 @@ public class CodeGenerator {
     ClassMethod method = this.magicInterface.visitMethod(ACC_PUBLIC | ACC_STATIC | varargs, methodName + STATIC, methodDesc);
     Insts insts = method.insts();
 
-    insts.get(this.magicInterface, this.impl);
+    insts.get(this.impl);
     insts.load(methodDesc, method.access);
-    insts.invoke(this.magicInterface, delegateMethod);
+    insts.invoke(this.magicInterface, delegateMethod.name, delegateMethod.desc);
     insts.returnOp(Type.getReturnType(delegateMethod.desc));
 
     return delegateMethod;

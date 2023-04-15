@@ -17,6 +17,7 @@
 package io.github.usernugget.redefiner.util.asm.node;
 
 import io.github.usernugget.redefiner.util.JavaInternals;
+import io.github.usernugget.redefiner.util.cache.ClassCache;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
@@ -31,7 +32,6 @@ import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static org.objectweb.asm.Opcodes.RETURN;
 
 public class ClassFile extends ClassNode {
-  // Hide superclass fields
   private byte fields, methods;
 
   public ClassFile() {
@@ -70,7 +70,7 @@ public class ClassFile extends ClassNode {
 
   @Override
   public ClassField visitField(int access, String name, String descriptor, String signature, Object value) {
-    ClassField field = new ClassField(access, name, descriptor, signature, value);
+    ClassField field = new ClassField(access, this, name, descriptor, signature, value);
     super.fields.add(field);
     return field;
   }
@@ -81,7 +81,7 @@ public class ClassFile extends ClassNode {
 
   @Override
   public ClassMethod visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-    ClassMethod method = new ClassMethod(access, name, descriptor, signature, exceptions);
+    ClassMethod method = new ClassMethod(access, this, name, descriptor, signature, exceptions);
     super.methods.add(method);
     return method;
   }
@@ -90,15 +90,15 @@ public class ClassFile extends ClassNode {
     return visitMethod(access, name, descriptor, null, null);
   }
 
-  public ClassMethod findMethod(String methodName) {
-    return findMethod(methodName, (String) null);
+  public ClassMethod findDeclaredMethod(String methodName) {
+    return findDeclaredMethod(methodName, (String) null);
   }
 
-  public ClassMethod findMethod(String methodName, Type methodDesc) {
-    return findMethod(methodName, methodDesc.getDescriptor());
+  public ClassMethod findDeclaredMethod(String methodName, Type methodDesc) {
+    return findDeclaredMethod(methodName, methodDesc.getDescriptor());
   }
 
-  public ClassMethod findMethod(String methodName, String methodDesc) {
+  public ClassMethod findDeclaredMethod(String methodName, String methodDesc) {
     for (ClassMethod method : methods()) {
       if ((methodName == null || method.name.equals(methodName)) &&
           (methodDesc == null || method.desc.equals(methodDesc))) {
@@ -108,11 +108,42 @@ public class ClassFile extends ClassNode {
     return null;
   }
 
-  public ClassField findField(String fieldName) {
-    return findField(fieldName, null);
+  public ClassMethod findMethod(ClassCache classLoader, String methodName, String methodDesc) {
+    ClassMethod localMethod = findDeclaredMethod(methodName, methodDesc);
+    if(localMethod != null) {
+      return localMethod;
+    }
+
+    if (this.superName != null) {
+      ClassFile superClass = classLoader.findClass(this.superName);
+      if(superClass != null) {
+        ClassMethod method = superClass.findDeclaredMethod(methodName, methodDesc);
+        if (method != null) {
+          return method;
+        }
+      }
+    }
+
+    if (this.interfaces != null) {
+      for (String interfaceName : this.interfaces) {
+        ClassFile interfaceClass = classLoader.findClass(interfaceName);
+        if (interfaceClass != null) {
+          ClassMethod method = interfaceClass.findDeclaredMethod(methodName, methodDesc);
+          if (method != null) {
+            return method;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
-  public ClassField findField(String fieldName, String descriptor) {
+  public ClassField findDeclaredField(String fieldName) {
+    return findDeclaredField(fieldName, null);
+  }
+
+  public ClassField findDeclaredField(String fieldName, String descriptor) {
     for (ClassField field : fields()) {
       if ((fieldName == null || field.name.equals(fieldName)) &&
           (descriptor == null || field.desc.equals(descriptor))) {

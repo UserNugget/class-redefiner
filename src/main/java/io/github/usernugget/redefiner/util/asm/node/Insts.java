@@ -68,23 +68,23 @@ public class Insts extends InsnList {
   }
 
   public void get(ClassFile owner, String fieldName, String fieldDesc) {
-    get(owner, owner.findField(fieldName, fieldDesc));
+    get(owner.findDeclaredField(fieldName, fieldDesc));
   }
 
-  public void get(ClassFile owner, ClassField field) {
-    fieldOp(field.isStatic() ? GETSTATIC : GETFIELD, owner, field);
+  public void get(ClassField field) {
+    fieldOp(field.isStatic() ? GETSTATIC : GETFIELD, field);
   }
 
   public void put(ClassFile owner, String fieldName, String fieldDesc) {
-    put(owner, owner.findField(fieldName, fieldDesc));
+    put(owner.findDeclaredField(fieldName, fieldDesc));
   }
 
-  public void put(ClassFile owner, ClassField field) {
-    fieldOp(field.isStatic() ? PUTSTATIC : PUTFIELD, owner, field);
+  public void put(ClassField field) {
+    fieldOp(field.isStatic() ? PUTSTATIC : PUTFIELD, field);
   }
 
-  public void fieldOp(int opcode, ClassFile owner, ClassField field) {
-    fieldOp(opcode, owner.name, field.name, field.desc);
+  public void fieldOp(int opcode, ClassField field) {
+    fieldOp(opcode, field.owner.name, field.name, field.desc);
   }
 
   public void fieldOp(int opcode, String owner, String fieldName, String fieldDesc) {
@@ -100,11 +100,11 @@ public class Insts extends InsnList {
   }
 
   public void invoke(ClassFile owner, String methodName, String methodDesc) {
-    invoke(owner, owner.findMethod(methodName, methodDesc));
+    invoke(owner.findDeclaredMethod(methodName, methodDesc));
   }
 
-  public void invoke(ClassFile owner, ClassMethod method) {
-    boolean isInterface = owner.isInterface();
+  public void invoke(ClassMethod method) {
+    boolean isInterface = method.owner.isInterface();
 
     int opcode;
     if (method.isStatic()) {
@@ -117,15 +117,15 @@ public class Insts extends InsnList {
       opcode = INVOKEVIRTUAL;
     }
 
-    add(new MethodInsnNode(opcode, owner.name, method.name, method.desc, isInterface));
+    add(new MethodInsnNode(opcode, method.owner.name, method.name, method.desc, isInterface));
   }
 
   public void invoke(int opcode, ClassFile owner, String methodName, String methodDesc) {
-    invoke(opcode, owner, owner.findMethod(methodName, methodDesc));
+    invoke(opcode, owner.findDeclaredMethod(methodName, methodDesc));
   }
 
-  public void invoke(int opcode, ClassFile owner, ClassMethod method) {
-    invoke(opcode, owner.name, method.name, method.desc, owner.isInterface());
+  public void invoke(int opcode,ClassMethod method) {
+    invoke(opcode, method.owner.name, method.name, method.desc, method.owner.isInterface());
   }
 
   public void invoke(int opcode, String owner, String methodName, String methodDesc, boolean isInterface) {
