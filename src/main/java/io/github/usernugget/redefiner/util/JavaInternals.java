@@ -16,12 +16,12 @@
 
 package io.github.usernugget.redefiner.util;
 
-import sun.misc.Unsafe;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
+import sun.misc.Unsafe;
 
 public final class JavaInternals {
   public static final int CLASS_MAJOR_VERSION, CLASS_MINOR_VERSION;

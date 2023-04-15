@@ -16,12 +16,12 @@
 
 package io.github.usernugget.redefiner.registry;
 
+import io.github.usernugget.redefiner.op.Op;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.node.ClassField;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
-import io.github.usernugget.redefiner.op.Op;
 import org.objectweb.asm.Type;
 
 public interface AnnotationHandler {

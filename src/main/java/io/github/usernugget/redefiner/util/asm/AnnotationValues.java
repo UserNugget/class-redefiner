@@ -16,12 +16,12 @@
 
 package io.github.usernugget.redefiner.util.asm;
 
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AnnotationNode;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AnnotationNode;
 
 public class AnnotationValues {
   private final Map<String, Object> objects;

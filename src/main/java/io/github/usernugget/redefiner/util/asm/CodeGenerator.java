@@ -16,15 +16,11 @@
 
 package io.github.usernugget.redefiner.util.asm;
 
+import io.github.usernugget.redefiner.util.JavaInternals;
 import io.github.usernugget.redefiner.util.asm.node.ClassField;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
-import io.github.usernugget.redefiner.util.JavaInternals;
 import io.github.usernugget.redefiner.util.asm.node.Insts;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
@@ -36,6 +32,10 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import static org.objectweb.asm.Opcodes.ACC_ABSTRACT;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_INTERFACE;

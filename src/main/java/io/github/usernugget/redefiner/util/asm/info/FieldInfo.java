@@ -16,9 +16,9 @@
 
 package io.github.usernugget.redefiner.util.asm.info;
 
+import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.node.ClassField;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
-import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import org.objectweb.asm.tree.FieldInsnNode;
 
 public class FieldInfo {

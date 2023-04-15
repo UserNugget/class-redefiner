@@ -16,12 +16,12 @@
 
 package io.github.usernugget.redefiner.util.asm;
 
-import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.JavaInternals;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
+import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import java.io.IOException;
 import java.io.InputStream;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 public class ClassIO {
   private static final class CustomClassWriter extends ClassWriter {

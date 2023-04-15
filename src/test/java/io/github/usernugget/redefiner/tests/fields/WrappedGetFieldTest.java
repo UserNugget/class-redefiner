@@ -21,8 +21,9 @@ import io.github.usernugget.redefiner.annotation.Mapping;
 import io.github.usernugget.redefiner.tests.AbstractTest;
 import io.github.usernugget.redefiner.throwable.RedefineFailedException;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class WrappedGetFieldTest extends AbstractTest {
   @Test

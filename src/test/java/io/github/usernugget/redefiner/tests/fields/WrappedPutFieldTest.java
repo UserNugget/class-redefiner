@@ -21,8 +21,9 @@ import io.github.usernugget.redefiner.annotation.PutField;
 import io.github.usernugget.redefiner.tests.AbstractTest;
 import io.github.usernugget.redefiner.throwable.RedefineFailedException;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class WrappedPutFieldTest extends AbstractTest {
   @Test

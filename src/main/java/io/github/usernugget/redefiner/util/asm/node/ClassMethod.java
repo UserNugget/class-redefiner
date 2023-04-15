@@ -16,8 +16,10 @@
 
 package io.github.usernugget.redefiner.util.asm.node;
 
-import io.github.usernugget.redefiner.util.asm.node.immutable.ImmutableVarInsnNode;
 import io.github.usernugget.redefiner.util.asm.node.immutable.ImmutableIincInsnNode;
+import io.github.usernugget.redefiner.util.asm.node.immutable.ImmutableVarInsnNode;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -26,8 +28,6 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.DLOAD;
 import static org.objectweb.asm.Opcodes.DSTORE;

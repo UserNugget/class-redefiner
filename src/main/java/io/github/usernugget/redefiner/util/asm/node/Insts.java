@@ -16,6 +16,7 @@
 
 package io.github.usernugget.redefiner.util.asm.node;
 
+import java.lang.reflect.Modifier;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
@@ -27,7 +28,6 @@ import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
-import java.lang.reflect.Modifier;
 import static org.objectweb.asm.Opcodes.ATHROW;
 import static org.objectweb.asm.Opcodes.BIPUSH;
 import static org.objectweb.asm.Opcodes.CHECKCAST;

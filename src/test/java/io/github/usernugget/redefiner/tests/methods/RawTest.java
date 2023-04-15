@@ -23,7 +23,6 @@ import io.github.usernugget.redefiner.throwable.RedefineFailedException;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.node.Insts;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.objectweb.asm.Opcodes.ICONST_0;

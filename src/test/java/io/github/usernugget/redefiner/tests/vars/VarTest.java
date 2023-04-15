@@ -23,7 +23,6 @@ import io.github.usernugget.redefiner.tests.AbstractTest;
 import io.github.usernugget.redefiner.throwable.RedefineFailedException;
 import io.github.usernugget.redefiner.util.JavaInternals;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class VarTest extends AbstractTest {

@@ -17,14 +17,14 @@
 package io.github.usernugget.redefiner.util.asm.node;
 
 import io.github.usernugget.redefiner.util.JavaInternals;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.List;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceClassVisitor;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.List;
 import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ASM9;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;

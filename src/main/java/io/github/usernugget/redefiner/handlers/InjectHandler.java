@@ -17,6 +17,7 @@
 package io.github.usernugget.redefiner.handlers;
 
 import io.github.usernugget.redefiner.annotation.Inject;
+import io.github.usernugget.redefiner.registry.AnnotationHandler;
 import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
@@ -25,7 +26,6 @@ import io.github.usernugget.redefiner.util.asm.node.ClassField;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
 import io.github.usernugget.redefiner.util.asm.node.Insts;
-import io.github.usernugget.redefiner.registry.AnnotationHandler;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;

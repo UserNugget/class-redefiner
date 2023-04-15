@@ -16,11 +16,11 @@
 
 package io.github.usernugget.redefiner.util.asm.info;
 
+import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
-import io.github.usernugget.redefiner.util.asm.AnnotationValues;
-import org.objectweb.asm.tree.MethodInsnNode;
 import java.util.Objects;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 public class MethodInfo {
   private final String name, desc;

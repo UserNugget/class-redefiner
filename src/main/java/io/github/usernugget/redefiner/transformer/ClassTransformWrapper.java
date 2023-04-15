@@ -19,12 +19,12 @@ package io.github.usernugget.redefiner.transformer;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.BasicValue;
 import org.objectweb.asm.tree.analysis.SimpleVerifier;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 public class ClassTransformWrapper {
   private final BiConsumer<ClassFile, CodeGenerator> transformer;

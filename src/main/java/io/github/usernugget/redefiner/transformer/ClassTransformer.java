@@ -19,7 +19,6 @@ package io.github.usernugget.redefiner.transformer;
 import io.github.usernugget.redefiner.util.asm.ClassIO;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
-import org.objectweb.asm.ClassWriter;
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
@@ -27,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import org.objectweb.asm.ClassWriter;
 
 public class ClassTransformer implements ClassFileTransformer {
   public static final ClassTransformer I = new ClassTransformer();

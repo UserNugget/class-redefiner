@@ -17,13 +17,13 @@
 package io.github.usernugget.redefiner.registry;
 
 import io.github.usernugget.redefiner.annotation.GetField;
+import io.github.usernugget.redefiner.annotation.Head;
+import io.github.usernugget.redefiner.annotation.Inject;
+import io.github.usernugget.redefiner.annotation.PutField;
 import io.github.usernugget.redefiner.annotation.Raw;
 import io.github.usernugget.redefiner.annotation.Replace;
 import io.github.usernugget.redefiner.annotation.Tail;
 import io.github.usernugget.redefiner.annotation.Var;
-import io.github.usernugget.redefiner.annotation.Head;
-import io.github.usernugget.redefiner.annotation.Inject;
-import io.github.usernugget.redefiner.annotation.PutField;
 import io.github.usernugget.redefiner.handlers.GetFieldHandler;
 import io.github.usernugget.redefiner.handlers.HeadHandler;
 import io.github.usernugget.redefiner.handlers.InjectHandler;

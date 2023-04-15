@@ -21,10 +21,8 @@ import io.github.usernugget.redefiner.annotation.Mapping;
 import io.github.usernugget.redefiner.op.Op;
 import io.github.usernugget.redefiner.tests.AbstractTest;
 import io.github.usernugget.redefiner.throwable.RedefineFailedException;
-import org.junit.jupiter.api.Test;
-
 import java.nio.charset.Charset;
-
+import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

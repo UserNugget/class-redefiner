@@ -17,6 +17,7 @@
 package io.github.usernugget.redefiner.handlers;
 
 import io.github.usernugget.redefiner.annotation.Raw;
+import io.github.usernugget.redefiner.registry.AnnotationHandler;
 import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
@@ -24,10 +25,9 @@ import io.github.usernugget.redefiner.util.asm.info.MethodInfo;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
 import io.github.usernugget.redefiner.util.asm.node.Insts;
-import io.github.usernugget.redefiner.registry.AnnotationHandler;
-import org.objectweb.asm.Type;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import org.objectweb.asm.Type;
 
 public class RawHandler implements AnnotationHandler {
   private static final String DESC = Type.getDescriptor(Raw.class);

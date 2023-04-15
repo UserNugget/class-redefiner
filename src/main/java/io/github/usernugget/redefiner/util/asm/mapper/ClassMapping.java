@@ -18,10 +18,10 @@ package io.github.usernugget.redefiner.util.asm.mapper;
 
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.RecordComponentNode;
 import java.util.HashMap;
 import java.util.Map;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.RecordComponentNode;
 
 public class ClassMapping {
   public final Map<String, String> classMapping = new HashMap<>();

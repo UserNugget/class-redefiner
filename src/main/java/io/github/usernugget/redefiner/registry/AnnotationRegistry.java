@@ -16,10 +16,10 @@
 
 package io.github.usernugget.redefiner.registry;
 
-import org.objectweb.asm.Type;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
+import org.objectweb.asm.Type;
 
 public class AnnotationRegistry {
   private final Map<String, AnnotationHandler> handlers = new HashMap<>();
