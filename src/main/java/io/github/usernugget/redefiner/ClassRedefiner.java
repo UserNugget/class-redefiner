@@ -86,6 +86,8 @@ public class ClassRedefiner {
     );
 
     List<ClassTransformWrapper> wrappers = new ArrayList<>();
+
+    sortMethods(mappingType.methods());
     for (ClassMethod method : mappingType.methods()) {
       method.insts(replaceOpWithCode(method.insts()));
 
@@ -123,6 +125,69 @@ public class ClassRedefiner {
       handleExceptions(mapping, wrappers);
       throw new RedefineFailedException("failed to apply " + mapping.getName(), throwable);
     }
+  }
+
+  protected void sortMethods(List<ClassMethod> methods) {
+    methods.sort((c1, c2) -> Integer.compare(
+       sortOrder(c2), sortOrder(c1)
+    ));
+  }
+
+  protected int sortOrder(ClassMethod method) {
+    boolean foundAnnotation = false;
+    boolean foundParameter = false;
+
+    int annotationPriority = Short.MAX_VALUE;
+    int parameterPriority = Short.MAX_VALUE;
+
+    List<AnnotationNode>[] visibleParameterAnnotations = method.visibleParameterAnnotations;
+    if (visibleParameterAnnotations != null) {
+      Type[] mappingArgs = Type.getArgumentTypes(method.desc);
+      for (int arg = 0; arg < mappingArgs.length; arg++) {
+        List<AnnotationNode> paramArgs = visibleParameterAnnotations[arg];
+        if (paramArgs != null) {
+          for (AnnotationNode paramArg : paramArgs) {
+            AnnotationHandler paramHandler = this.registry.getHandler(paramArg.desc);
+            if (paramHandler != null) {
+              short priority = paramHandler.priority();
+              if(priority < 0) {
+                throw new IllegalStateException(paramHandler + " priority should be between 0-" + Short.MAX_VALUE);
+              }
+
+              foundParameter = true;
+              parameterPriority = Math.min(parameterPriority, priority);
+            }
+          }
+        }
+      }
+    }
+
+    List<AnnotationNode> visibleAnnotations = method.visibleAnnotations;
+    if (visibleAnnotations != null) {
+      for (AnnotationNode annotationNode : visibleAnnotations) {
+        AnnotationHandler handler = this.registry.getHandler(annotationNode.desc);
+        if (handler != null) {
+          short priority = handler.priority();
+          if(priority < 0) {
+            throw new IllegalStateException(handler + " priority should be between 0-" + Short.MAX_VALUE);
+          }
+
+          foundAnnotation = true;
+          annotationPriority = Math.min(annotationPriority, handler.priority());
+        }
+      }
+    }
+
+    int value = 0;
+    if(foundAnnotation) {
+      value += annotationPriority;
+    }
+
+    if(foundParameter) {
+      value += Short.MAX_VALUE + parameterPriority;
+    }
+
+    return value;
   }
 
   protected void handleExceptions(Class<?> mapping, List<ClassTransformWrapper> wrappers) throws RedefineFailedException {

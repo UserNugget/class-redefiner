@@ -16,7 +16,9 @@
 
 package io.github.usernugget.redefiner.handlers;
 
+import io.github.usernugget.redefiner.annotation.Tail;
 import io.github.usernugget.redefiner.registry.AnnotationHandler;
+import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.Asm;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
@@ -35,6 +37,8 @@ import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.ISTORE;
 
 public class TailHandler implements AnnotationHandler {
+  private static final String DESC = Type.getDescriptor(Tail.class);
+
   @Override
   public void handleMethod(
      CodeGenerator codeGenerator, AnnotationValues args,
@@ -90,5 +94,15 @@ public class TailHandler implements AnnotationHandler {
     }
 
     targetInsts.add(new InsnNode(returnType.getOpcode(IRETURN)));
+  }
+
+  @Override
+  public String annotationDesc() {
+    return DESC;
+  }
+
+  @Override
+  public short priority() {
+    return HandlerPriority.NORMAL;
   }
 }

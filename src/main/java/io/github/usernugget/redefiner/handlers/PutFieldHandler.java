@@ -16,6 +16,8 @@
 
 package io.github.usernugget.redefiner.handlers;
 
+import io.github.usernugget.redefiner.annotation.PutField;
+import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.info.FieldInfo;
@@ -32,6 +34,8 @@ import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.PUTSTATIC;
 
 public class PutFieldHandler implements AnnotationHandler {
+  private static final String DESC = Type.getDescriptor(PutField.class);
+
   @Override
   public void handleMethod(
      CodeGenerator codeGenerator, AnnotationValues args,
@@ -72,5 +76,15 @@ public class PutFieldHandler implements AnnotationHandler {
         }
       }
     }
+  }
+
+  @Override
+  public String annotationDesc() {
+    return DESC;
+  }
+
+  @Override
+  public short priority() {
+    return HandlerPriority.NORMAL;
   }
 }

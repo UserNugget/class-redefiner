@@ -16,6 +16,8 @@
 
 package io.github.usernugget.redefiner.handlers;
 
+import io.github.usernugget.redefiner.annotation.Raw;
+import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.info.MethodInfo;
@@ -28,6 +30,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class RawHandler implements AnnotationHandler {
+  private static final String DESC = Type.getDescriptor(Raw.class);
+
   @Override
   public void handleMethod(
      CodeGenerator codeGenerator, AnnotationValues args,
@@ -65,5 +69,15 @@ public class RawHandler implements AnnotationHandler {
         }
       }
     }
+  }
+
+  @Override
+  public String annotationDesc() {
+    return DESC;
+  }
+
+  @Override
+  public short priority() {
+    return HandlerPriority.NORMAL;
   }
 }

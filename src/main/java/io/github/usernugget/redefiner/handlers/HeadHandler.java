@@ -16,6 +16,8 @@
 
 package io.github.usernugget.redefiner.handlers;
 
+import io.github.usernugget.redefiner.annotation.Head;
+import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.Asm;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
@@ -31,6 +33,8 @@ import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 
 public class HeadHandler implements AnnotationHandler {
+  private static final String DESC = Type.getDescriptor(Head.class);
+
   @Override
   public void handleMethod(
      CodeGenerator codeGenerator, AnnotationValues args,
@@ -57,5 +61,15 @@ public class HeadHandler implements AnnotationHandler {
     Insts insns = method.insts();
     insns.insert(returnLabel);
     insns.insertBefore(returnLabel, mappingInsts);
+  }
+
+  @Override
+  public String annotationDesc() {
+    return DESC;
+  }
+
+  @Override
+  public short priority() {
+    return HandlerPriority.NORMAL;
   }
 }

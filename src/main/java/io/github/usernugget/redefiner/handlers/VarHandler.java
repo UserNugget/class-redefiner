@@ -16,6 +16,8 @@
 
 package io.github.usernugget.redefiner.handlers;
 
+import io.github.usernugget.redefiner.annotation.Var;
+import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
@@ -30,6 +32,8 @@ import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 public class VarHandler implements AnnotationHandler {
+  private static final String DESC = Type.getDescriptor(Var.class);
+
   @Override
   public void handleParameter(
      ClassFile targetClass, ClassMethod targetMethod,
@@ -99,5 +103,15 @@ public class VarHandler implements AnnotationHandler {
         mappingInsts.set(iincNode, new ImmutableIincInsnNode(iincNode.getOpcode(), argMapping));
       }
     }
+  }
+
+  @Override
+  public String annotationDesc() {
+    return DESC;
+  }
+
+  @Override
+  public short priority() {
+    return HandlerPriority.NORMAL;
   }
 }

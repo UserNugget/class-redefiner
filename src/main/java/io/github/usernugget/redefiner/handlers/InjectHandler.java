@@ -16,6 +16,8 @@
 
 package io.github.usernugget.redefiner.handlers;
 
+import io.github.usernugget.redefiner.annotation.Inject;
+import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.info.MethodInfo;
@@ -25,6 +27,7 @@ import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
 import io.github.usernugget.redefiner.util.asm.node.Insts;
 import io.github.usernugget.redefiner.registry.AnnotationHandler;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -36,6 +39,8 @@ import static org.objectweb.asm.Opcodes.PUTFIELD;
 import static org.objectweb.asm.Opcodes.PUTSTATIC;
 
 public class InjectHandler implements AnnotationHandler {
+  private static final String DESC = Type.getDescriptor(Inject.class);
+
   public static ClassMethod injectMethod(
      CodeGenerator codeGenerator, ClassFile targetClass,
      ClassFile mappingClass, ClassMethod mappingMethod
@@ -121,5 +126,15 @@ public class InjectHandler implements AnnotationHandler {
      Class<?> mappingJavaClass, ClassFile mappingClass, ClassMethod mappingMethod
   ) {
     injectMethod(codeGenerator, targetClass, mappingClass, mappingMethod);
+  }
+
+  @Override
+  public String annotationDesc() {
+    return DESC;
+  }
+
+  @Override
+  public short priority() {
+    return HandlerPriority.LOW;
   }
 }

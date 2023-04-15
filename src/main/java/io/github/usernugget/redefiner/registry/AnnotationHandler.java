@@ -28,6 +28,9 @@ public interface AnnotationHandler {
   String OP_OBJECT_TYPE = org.objectweb.asm.Type.getInternalName(Op.class);
   String OP_OBJECT = org.objectweb.asm.Type.getDescriptor(Op.class);
 
+  String annotationDesc();
+  short priority();
+
   default void handleMethod(CodeGenerator codeGenerator, AnnotationValues args,
      Class<?> targetJavaClass, ClassFile targetClass, Class<?> mappingJavaClass,
      ClassFile mappingClass, ClassMethod mappingMethod) { }

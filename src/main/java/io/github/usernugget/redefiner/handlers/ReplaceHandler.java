@@ -16,7 +16,9 @@
 
 package io.github.usernugget.redefiner.handlers;
 
+import io.github.usernugget.redefiner.annotation.Replace;
 import io.github.usernugget.redefiner.registry.AnnotationHandler;
+import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.info.MethodInfo;
@@ -25,6 +27,8 @@ import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
 import org.objectweb.asm.Type;
 
 public class ReplaceHandler implements AnnotationHandler {
+  private static final String DESC = Type.getDescriptor(Replace.class);
+
   @Override
   public void handleMethod(
      CodeGenerator codeGenerator, AnnotationValues args,
@@ -44,5 +48,15 @@ public class ReplaceHandler implements AnnotationHandler {
     }
 
     method.insts(mappingMethod.insts());
+  }
+
+  @Override
+  public String annotationDesc() {
+    return DESC;
+  }
+
+  @Override
+  public short priority() {
+    return HandlerPriority.NORMAL;
   }
 }

@@ -16,7 +16,9 @@
 
 package io.github.usernugget.redefiner.handlers;
 
+import io.github.usernugget.redefiner.annotation.GetField;
 import io.github.usernugget.redefiner.registry.AnnotationHandler;
+import io.github.usernugget.redefiner.registry.HandlerPriority;
 import io.github.usernugget.redefiner.util.asm.AnnotationValues;
 import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.info.FieldInfo;
@@ -33,6 +35,8 @@ import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.GETSTATIC;
 
 public class GetFieldHandler implements AnnotationHandler {
+  private static final String DESC = Type.getDescriptor(GetField.class);
+
   @Override
   public void handleMethod(
      CodeGenerator code, AnnotationValues args,
@@ -76,5 +80,15 @@ public class GetFieldHandler implements AnnotationHandler {
         }
       }
     }
+  }
+
+  @Override
+  public String annotationDesc() {
+    return DESC;
+  }
+
+  @Override
+  public short priority() {
+    return HandlerPriority.NORMAL;
   }
 }
