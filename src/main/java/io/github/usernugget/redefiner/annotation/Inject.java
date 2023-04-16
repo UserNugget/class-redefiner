@@ -23,9 +23,16 @@ import java.lang.annotation.Target;
 
 
 /**
- * Creates method in separate class, that will have
+ * Method injection:
+ * <p>
+ * Handler will create method in separate class, that will have
  * full access to redefined class and used in it
+ * <p>
+ *
+ * Field injection:
+ * <p>
+ * Needs JDK that can modify fields
  */
-@Target(ElementType.METHOD)
+@Target({ ElementType.METHOD, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Inject { }

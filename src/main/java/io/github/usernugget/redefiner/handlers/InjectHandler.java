@@ -120,6 +120,15 @@ public class InjectHandler implements AnnotationHandler {
   }
 
   @Override
+  public void handleField(
+     CodeGenerator codeGenerator, AnnotationValues args,
+     Class<?> targetJavaClass, ClassFile targetClass,
+     Class<?> mappingJavaClass, ClassFile mappingClass, ClassField mappingField
+  ) {
+    targetClass.fields().add(mappingField);
+  }
+
+  @Override
   public void handleMethod(
      CodeGenerator codeGenerator, AnnotationValues args,
      Class<?> targetJavaClass, ClassFile targetClass,
