@@ -117,7 +117,7 @@ public class ClassFile extends ClassNode {
     if (this.superName != null) {
       ClassFile superClass = classLoader.findClass(this.superName);
       if(superClass != null) {
-        ClassMethod method = superClass.findDeclaredMethod(methodName, methodDesc);
+        ClassMethod method = superClass.findMethod(classLoader, methodName, methodDesc);
         if (method != null) {
           return method;
         }
@@ -128,7 +128,7 @@ public class ClassFile extends ClassNode {
       for (String interfaceName : this.interfaces) {
         ClassFile interfaceClass = classLoader.findClass(interfaceName);
         if (interfaceClass != null) {
-          ClassMethod method = interfaceClass.findDeclaredMethod(methodName, methodDesc);
+          ClassMethod method = interfaceClass.findMethod(classLoader, methodName, methodDesc);
           if (method != null) {
             return method;
           }
