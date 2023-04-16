@@ -3,6 +3,7 @@ Library to modify classes at runtime using [ASM](https://asm.ow2.io/) and Java A
 
 ## Limitations
 - [CDS](https://openjdk.org/jeps/310) will ignore modified classes
+- Properly adding new fields/methods is impossible at this moment
 
 ## Getting started
 
