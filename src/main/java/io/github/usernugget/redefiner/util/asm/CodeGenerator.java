@@ -51,7 +51,7 @@ public class CodeGenerator {
   private static final String GET_FIELD = "_getfield", PUT_FIELD = "_putfield", INVOKE = "_invoke", STATIC = "_static";
 
   private static final String CLASS_NAME = Type.getInternalName(CodeGenerator.class).replace('.', '/');
-  private static final Pattern ESCAPE_PATTERN = Pattern.compile("[/();\\[]");
+  private static final Pattern ESCAPE_PATTERN = Pattern.compile("[.;\\[/<>()]");
 
   private static final MethodHandle CLASS_LOADER_CONSTRUCTOR;
 
