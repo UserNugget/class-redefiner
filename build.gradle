@@ -28,10 +28,10 @@ allprojects {
 }
 
 dependencies {
-  implementation 'org.ow2.asm:asm:9.5'
-  implementation 'org.ow2.asm:asm-tree:9.5'
-  implementation 'org.ow2.asm:asm-util:9.5'
-  implementation 'org.ow2.asm:asm-commons:9.5'
+  api 'org.ow2.asm:asm:9.5'
+  api 'org.ow2.asm:asm-tree:9.5'
+  api 'org.ow2.asm:asm-util:9.5'
+  api 'org.ow2.asm:asm-commons:9.5'
 
   int classVersion = (int) Double.parseDouble(System.getProperty("java.class.version"));
   if (classVersion < 53) {
