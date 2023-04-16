@@ -31,6 +31,10 @@ public interface AnnotationHandler {
   String annotationDesc();
   short priority();
 
+  default void handleField(CodeGenerator codeGenerator, AnnotationValues args,
+     Class<?> targetJavaClass, ClassFile targetClass, Class<?> mappingJavaClass,
+     ClassFile mappingClass, ClassField mappingField) { }
+
   default void handleMethod(CodeGenerator codeGenerator, AnnotationValues args,
      Class<?> targetJavaClass, ClassFile targetClass, Class<?> mappingJavaClass,
      ClassFile mappingClass, ClassMethod mappingMethod) { }

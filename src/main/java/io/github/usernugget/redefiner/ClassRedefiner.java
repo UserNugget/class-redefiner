@@ -31,6 +31,7 @@ import io.github.usernugget.redefiner.util.asm.CodeGenerator;
 import io.github.usernugget.redefiner.util.asm.info.MethodInfo;
 import io.github.usernugget.redefiner.util.asm.mapper.ClassMapping;
 import io.github.usernugget.redefiner.util.asm.mapper.MappingRemapper;
+import io.github.usernugget.redefiner.util.asm.node.ClassField;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
 import io.github.usernugget.redefiner.util.asm.node.Insts;
@@ -87,7 +88,35 @@ public class ClassRedefiner {
 
     List<ClassTransformWrapper> wrappers = new ArrayList<>();
 
+    sortFields(mappingType.fields());
     sortMethods(mappingType.methods());
+
+    for (ClassField field : mappingType.fields()) {
+      List<AnnotationNode> visibleAnnotations = field.visibleAnnotations;
+      if (visibleAnnotations != null) {
+        for (int i = 0; i < visibleAnnotations.size(); i++) {
+          AnnotationNode annotationNode = visibleAnnotations.get(i);
+          AnnotationHandler handler = this.registry.getHandler(annotationNode.desc);
+          if (handler == null) {
+            continue;
+          }
+
+          visibleAnnotations.remove(i--);
+
+          ClassTransformWrapper wrapper = ClassTransformer.I.enqueue(
+             targetType,
+             newFieldTransformer(
+                handler, field, annotationNode,
+                targetClass, mapping, mappingType
+             )
+          );
+
+          wrapper.setVerify(mappingAnnotation.verifyCode());
+          wrappers.add(wrapper);
+        }
+      }
+    }
+
     for (ClassMethod method : mappingType.methods()) {
       method.insts(replaceOpWithCode(method.insts()));
 
@@ -127,17 +156,29 @@ public class ClassRedefiner {
     }
   }
 
+  protected void sortFields(List<ClassField> fields) {
+    fields.sort((c1, c2) -> Integer.compare(
+       sortOrder(c2), sortOrder(c1)
+    ));
+  }
+
   protected void sortMethods(List<ClassMethod> methods) {
     methods.sort((c1, c2) -> Integer.compare(
        sortOrder(c2), sortOrder(c1)
     ));
   }
 
-  protected int sortOrder(ClassMethod method) {
-    boolean foundAnnotation = false;
-    boolean foundParameter = false;
+  protected int sortOrder(ClassField field) {
+    int priority = findAnnotationPriority(field.visibleAnnotations);
+    if(priority != Integer.MAX_VALUE) {
+      return priority;
+    }
 
-    int annotationPriority = Short.MAX_VALUE;
+    return -1;
+  }
+
+  protected int sortOrder(ClassMethod method) {
+    boolean foundParameter = false;
     int parameterPriority = Short.MAX_VALUE;
 
     List<AnnotationNode>[] visibleParameterAnnotations = method.visibleParameterAnnotations;
@@ -162,7 +203,22 @@ public class ClassRedefiner {
       }
     }
 
-    List<AnnotationNode> visibleAnnotations = method.visibleAnnotations;
+    int value = 0;
+
+    int annotationPriority = findAnnotationPriority(method.visibleAnnotations);
+    if (annotationPriority != Integer.MAX_VALUE) {
+      value += annotationPriority;
+    }
+
+    if (foundParameter) {
+      value += Short.MAX_VALUE + parameterPriority;
+    }
+
+    return value;
+  }
+
+  protected int findAnnotationPriority(List<AnnotationNode> visibleAnnotations) {
+    int annotationPriority = Integer.MAX_VALUE;
     if (visibleAnnotations != null) {
       for (AnnotationNode annotationNode : visibleAnnotations) {
         AnnotationHandler handler = this.registry.getHandler(annotationNode.desc);
@@ -172,22 +228,12 @@ public class ClassRedefiner {
             throw new IllegalStateException(handler + " priority should be between 0-" + Short.MAX_VALUE);
           }
 
-          foundAnnotation = true;
           annotationPriority = Math.min(annotationPriority, handler.priority());
         }
       }
     }
 
-    int value = 0;
-    if(foundAnnotation) {
-      value += annotationPriority;
-    }
-
-    if(foundParameter) {
-      value += Short.MAX_VALUE + parameterPriority;
-    }
-
-    return value;
+    return annotationPriority;
   }
 
   protected void handleExceptions(Class<?> mapping, List<ClassTransformWrapper> wrappers) throws RedefineFailedException {
@@ -209,6 +255,16 @@ public class ClassRedefiner {
       }
       throw exception;
     }
+  }
+
+  protected BiConsumer<ClassFile, CodeGenerator> newFieldTransformer(
+     AnnotationHandler handler, ClassField targetField, AnnotationNode annotationNode,
+     Class<?> targetJavaClass, Class<?> mappingJavaClass, ClassFile mappingAsmClass
+  ) {
+    return (targetAsmClass, codeGenerator) -> handler.handleField(
+       codeGenerator, new AnnotationValues(annotationNode), targetJavaClass,
+       targetAsmClass, mappingJavaClass, mappingAsmClass, targetField
+    );
   }
 
   protected BiConsumer<ClassFile, CodeGenerator> newCodeTransformer(
