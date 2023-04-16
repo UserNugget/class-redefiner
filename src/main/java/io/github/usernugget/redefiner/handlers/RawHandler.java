@@ -44,15 +44,15 @@ public class RawHandler implements AnnotationHandler {
       );
     }
 
+    if(!mappingMethod.desc.endsWith(")V")) {
+      throw new IllegalStateException("mapping method " + mappingMethod.name + " should be void");
+    }
+
     Type[] methodParameters = Type.getArgumentTypes(mappingMethod.desc);
     if(methodParameters.length != 2 ||
        !methodParameters[0].getClassName().equals(CodeGenerator.class.getName()) ||
        !methodParameters[1].getClassName().equals(Insts.class.getName())) {
       throw new IllegalStateException("mapping method " + mappingMethod.name + " should use (CodeGenerator, Insts) as arguments");
-    }
-
-    if(Type.getReturnType(mappingMethod.desc).getSort() != Type.VOID) {
-      throw new IllegalStateException("mapping method " + mappingMethod.name + " should be void");
     }
 
     ClassMethod method = MethodInfo.parse(mappingMethod, args)

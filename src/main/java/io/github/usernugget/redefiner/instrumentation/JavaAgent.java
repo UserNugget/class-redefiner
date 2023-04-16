@@ -169,15 +169,8 @@ public enum JavaAgent {
     method.visitFieldInsn(PUTSTATIC, CLASS_NAME, "I", "Ljava/lang/instrument/Instrumentation;");
     method.visitInsn(RETURN);
 
-    byte[] classBytes = ClassIO.writeClass(
-       classFile,
-       ClassLoader.getSystemClassLoader(),
-       ClassWriter.COMPUTE_FRAMES
-    );
-
-    return JavaInternals.defineClass(
-       CLASS_NAME, classBytes, 0, classBytes.length,
-       ClassLoader.getSystemClassLoader(), null
+    return ClassIO.define(
+       classFile, ClassLoader.getSystemClassLoader()
     );
   }
 

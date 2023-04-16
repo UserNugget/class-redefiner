@@ -45,7 +45,7 @@ public class TailHandler implements AnnotationHandler {
      Class<?> targetJavaClass, ClassFile targetClass,
      Class<?> mappingJavaClass, ClassFile mappingClass, ClassMethod mappingMethod
   ) {
-    if(Type.getReturnType(mappingMethod.desc).getSort() != Type.VOID) {
+    if(!mappingMethod.desc.endsWith(")V")) {
       throw new IllegalStateException(
          "mapping method " + mappingMethod.name + " should be void"
       );
