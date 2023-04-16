@@ -18,34 +18,70 @@ package io.github.usernugget.redefiner.tests.other;
 
 import io.github.usernugget.redefiner.annotation.Head;
 import io.github.usernugget.redefiner.annotation.Mapping;
+import io.github.usernugget.redefiner.op.Op;
 import io.github.usernugget.redefiner.tests.AbstractTest;
-import io.github.usernugget.redefiner.throwable.RedefineFailedException;
+import io.github.usernugget.redefiner.tests.other.classes.ParentClassLoaderTestTmp1;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParentClassLoaderTest extends AbstractTest {
-  public static boolean VALUE;
+  public static final class ParentClassLoader extends URLClassLoader {
+    public ParentClassLoader(ClassLoader parent) {
+      super(new URL[] {
+         ParentClassLoader.class.getProtectionDomain().getCodeSource().getLocation()
+      }, parent);
+    }
+
+    @Override
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+      if (name.startsWith("ParentClassLoaderTest")) {
+        return super.findClass(
+           // 50 chars {:
+           "io.github.usernugget.redefiner.tests.other.classes." + name
+        );
+      }
+
+      return super.loadClass(name);
+    }
+  }
 
   @Test
-  void testParent() throws RedefineFailedException {
-    REDEFINER.applyMapping(TmpMapping.class);
-    System.console();
+  void testParent() throws Throwable {
+    ParentClassLoader firstClassLoader = new ParentClassLoader(ParentClassLoaderTest.class.getClassLoader());
+
+    ParentClassLoader secondClassLoader = new ParentClassLoader(firstClassLoader);
+    ParentClassLoader thirdClassLoader = new ParentClassLoader(firstClassLoader);
+
+    Class<?> secondClass = thirdClassLoader.loadClass("ParentClassLoaderTestTmp1");
+    Class<?> firstClass = secondClassLoader.loadClass("ParentClassLoaderTestTmp");
+    Method firstMethod = firstClass.getMethod("invoke");
+
+    assertEquals(thirdClassLoader, secondClass.getClassLoader());
+    assertEquals(secondClassLoader, firstClass.getClassLoader());
+
+    assertTrue((Boolean) firstMethod.invoke(null));
+    REDEFINER.applyMapping(TmpMapping.class, secondClassLoader);
+    assertFalse((Boolean) firstMethod.invoke(null));
   }
 
   public static boolean falseValue() {
     return false;
   }
 
-  @Mapping(System.class)
+  @Mapping(raw = "io.github.usernugget.redefiner.tests.other.classes.ParentClassLoaderTestTmp")
   public static final class TmpMapping {
     @Head
-    public static void console() {
-      VALUE = ParentClassLoaderTest.falseValue() && VALUE;
-    }
-  }
+    public static void invoke() {
+      if (TmpMapping.class.getClassLoader() == ParentClassLoaderTestTmp1.class.getClassLoader()) {
+        throw new Error("should not reach here");
+      }
 
-  public static final class Tmp {
-    public static boolean invoke() {
-      return true;
+      Op.returnValue(!ParentClassLoaderTestTmp1.FIELD || !ParentClassLoaderTestTmp1.invoke());
     }
   }
 }

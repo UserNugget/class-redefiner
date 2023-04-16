@@ -114,20 +114,33 @@ public class Asm {
       }
     }
 
-    crossGenerator.define(targetClassLoader, mappingClassLoader);
+    ClassLoader classLoader = findOverlappingClassLoader(classLoaders, targetClassLoader, mappingClassLoader);
+    crossGenerator.define(classLoader, mappingClassLoader);
+  }
+
+  public static ClassLoader findOverlappingClassLoader(Set<ClassLoader> cache, ClassLoader first, ClassLoader second) {
+    cache.clear();
+
+    ClassLoader classLoader = first;
+    while (classLoader != null) {
+      cache.add(classLoader);
+      classLoader = classLoader.getParent();
+    }
+
+    classLoader = second;
+    while (classLoader != null) {
+      if(cache.contains(classLoader)) {
+        return classLoader;
+      }
+      classLoader = classLoader.getParent();
+    }
+
+    return null;
   }
 
   public static boolean isInDifferentClassLoader(
      Set<ClassLoader> cache, ClassLoader first, ClassLoader second
   ) {
-    cache.clear();
-
-    ClassLoader classLoader = first;
-    while(classLoader != null) {
-      cache.add(classLoader);
-      classLoader = classLoader.getParent();
-    }
-
-    return !cache.contains(second);
+    return findOverlappingClassLoader(cache, first, second) != null;
   }
 }
