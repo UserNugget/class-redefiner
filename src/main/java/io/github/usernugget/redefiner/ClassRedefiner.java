@@ -151,6 +151,15 @@ public class ClassRedefiner {
       handleExceptions(mapping, wrappers);
     } catch (RedefineFailedException throwable) {
       throw throwable;
+    } catch (VerifyError error) {
+      if(error.getMessage() == null) {
+        throw new RedefineFailedException(
+           "failed to apply " + mapping.getName() + " with an unknown verification exception, " +
+           "printing bytecode: \n" + wrappers.get(0).getTargetClass().toBytecodeString(), error);
+      } else {
+        handleExceptions(mapping, wrappers);
+        throw new RedefineFailedException("failed to apply " + mapping.getName(), error);
+      }
     } catch (Throwable throwable) {
       handleExceptions(mapping, wrappers);
       throw new RedefineFailedException("failed to apply " + mapping.getName(), throwable);

@@ -28,6 +28,7 @@ import org.objectweb.asm.tree.analysis.SimpleVerifier;
 
 public class ClassTransformWrapper {
   private final BiConsumer<ClassFile, CodeGenerator> transformer;
+  private ClassFile targetClass;
   private ClassLoader classLoader;
   private boolean verify;
   private Throwable throwable;
@@ -38,6 +39,7 @@ public class ClassTransformWrapper {
 
   public void transform(ClassFile classFile, CodeGenerator codeGenerator) {
     try {
+      this.targetClass = classFile;
       this.transformer.accept(classFile, codeGenerator);
 
       if (this.verify) {
@@ -85,5 +87,9 @@ public class ClassTransformWrapper {
 
   public void setThrowable(Throwable throwable) {
     this.throwable = throwable;
+  }
+
+  public ClassFile getTargetClass() {
+    return this.targetClass;
   }
 }
