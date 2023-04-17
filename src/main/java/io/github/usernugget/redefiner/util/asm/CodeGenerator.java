@@ -139,7 +139,7 @@ public class CodeGenerator {
   }
 
   private String newMethodName(String owner, String desc, String name) {
-    return ESCAPE_PATTERN.matcher(owner + desc).replaceAll("_") + name;
+    return ESCAPE_PATTERN.matcher(owner + desc + name).replaceAll("_");
   }
 
   public ClassMethod fieldGetter(ClassFile owner, ClassField field) {
