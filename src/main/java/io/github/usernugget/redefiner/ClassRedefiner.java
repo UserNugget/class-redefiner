@@ -112,6 +112,7 @@ public class ClassRedefiner {
           );
 
           wrapper.setVerify(mappingAnnotation.verifyCode());
+          wrapper.setClassLoader(classLoader);
           wrappers.add(wrapper);
         }
       }
