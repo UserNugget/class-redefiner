@@ -32,7 +32,15 @@ public final class JavaInternals {
   private static final Object UNSAFE_OBJECT;
   private static final MethodHandle DEFINE_CLASS;
 
+  private static final MethodHandle GET_MODULE;
+  private static final MethodHandle OPEN_PACKAGE;
+  private static final MethodHandle READ_PACKAGE;
+
   static {
+    MethodHandle getModule = null;
+    MethodHandle openPackage = null;
+    MethodHandle readPackage = null;
+
     try {
       String classVersion = System.getProperty("java.class.version");
 
@@ -51,6 +59,20 @@ public final class JavaInternals {
       );
 
       if(CLASS_MAJOR_VERSION >= 53) {
+        Class<?> moduleClass = Class.forName("java.lang.Module");
+        getModule = TRUSTED_LOOKUP.findVirtual(
+           Class.class, "getModule",
+           MethodType.methodType(moduleClass)
+        );
+        openPackage = TRUSTED_LOOKUP.findVirtual(
+           moduleClass, "implAddOpens",
+           MethodType.methodType(void.class, String.class)
+        );
+        readPackage = TRUSTED_LOOKUP.findVirtual(
+           moduleClass, "implAddReadsAllUnnamed",
+           MethodType.methodType(void.class)
+        );
+
         Class<?> internalUnsafe = Class.forName("jdk.internal.misc.Unsafe");
         UNSAFE_OBJECT = TRUSTED_LOOKUP.findStatic(
            internalUnsafe,
@@ -61,6 +83,10 @@ public final class JavaInternals {
         UNSAFE_OBJECT = UNSAFE;
       }
 
+      GET_MODULE = getModule;
+      OPEN_PACKAGE = openPackage;
+      READ_PACKAGE = readPackage;
+
       DEFINE_CLASS = TRUSTED_LOOKUP.findVirtual(
          UNSAFE_OBJECT.getClass(),
          "defineClass",
@@ -69,6 +95,27 @@ public final class JavaInternals {
       );
     } catch (Throwable t) {
       throw new ExceptionInInitializerError(t);
+    }
+  }
+
+  public static void exposeModule(Class<?> targetClass, Class<?> classToAddToReads) {
+    if(OPEN_PACKAGE == null || targetClass.isPrimitive()) {
+      return;
+    }
+
+    if(targetClass.isArray()) {
+      exposeModule(targetClass.componentType(), classToAddToReads);
+      return;
+    }
+
+    try {
+      Object module = GET_MODULE.invoke(targetClass);
+      OPEN_PACKAGE.invoke(module, targetClass.getPackage().getName());
+      if (classToAddToReads != null) {
+        READ_PACKAGE.invoke(module);
+      }
+    } catch (Throwable throwable) {
+      throw new Error(throwable);
     }
   }
 

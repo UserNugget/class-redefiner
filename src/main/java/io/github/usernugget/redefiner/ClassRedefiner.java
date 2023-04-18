@@ -135,8 +135,8 @@ public class ClassRedefiner {
           ClassTransformWrapper wrapper = ClassTransformer.I.enqueue(
              targetType,
              newCodeTransformer(
-                handler, method, annotationNode,
-                targetClass, mapping, mappingType
+                handler, annotationNode, classLoader,
+                targetClass, mapping, mappingType, method
              )
           );
 
@@ -278,8 +278,8 @@ public class ClassRedefiner {
   }
 
   protected BiConsumer<ClassFile, CodeGenerator> newCodeTransformer(
-     AnnotationHandler handler, ClassMethod targetMethod, AnnotationNode annotationNode,
-     Class<?> targetJavaClass, Class<?> mappingJavaClass, ClassFile mappingAsmClass
+     AnnotationHandler handler, AnnotationNode annotationNode, ClassLoader classLoader,
+     Class<?> targetJavaClass, Class<?> mappingJavaClass, ClassFile mappingAsmClass, ClassMethod targetMethod
   ) {
     return (targetAsmClass, codeGenerator) -> {
       List<AnnotationNode>[] parameterAnnotations = targetMethod.visibleParameterAnnotations;
@@ -305,7 +305,7 @@ public class ClassRedefiner {
         }
       }
 
-      Asm.fixClassLoaders(mappingJavaClass, targetJavaClass, targetMethod);
+      Asm.fixClassLoaders(targetJavaClass, classLoader, targetJavaClass.getClassLoader(), targetMethod);
 
       handler.handleMethod(
          codeGenerator, new AnnotationValues(annotationNode), targetJavaClass,

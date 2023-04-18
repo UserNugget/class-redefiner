@@ -16,6 +16,7 @@
 
 package io.github.usernugget.redefiner.util.asm;
 
+import io.github.usernugget.redefiner.util.JavaInternals;
 import io.github.usernugget.redefiner.util.asm.node.ClassField;
 import io.github.usernugget.redefiner.util.asm.node.ClassFile;
 import io.github.usernugget.redefiner.util.asm.node.ClassMethod;
@@ -58,16 +59,18 @@ public class Asm {
     return isReturn(insnNode.getOpcode()) && !(insnNode instanceof ImmutableInsnNode);
   }
 
-  public static void fixClassLoaders(Class<?> mapping, Class<?> target, ClassMethod method) {
+  public static void fixClassLoaders(
+     Class<?> targetClass,
+     ClassLoader mappingClassLoader, ClassLoader targetClassLoader,
+     ClassMethod method
+  ) {
     ClassCache classCache = new ClassCache();
     Set<ClassLoader> classLoaders = Collections.newSetFromMap(new IdentityHashMap<>());
-
-    ClassLoader targetClassLoader = target.getClassLoader();
-    ClassLoader mappingClassLoader = mapping.getClassLoader();
 
     CodeGenerator crossGenerator = new CodeGenerator(true);
 
     Insts mappingInsts = method.insts();
+    // TODO: support for ldc<class>, types
     for(AbstractInsnNode i : mappingInsts) {
       boolean isMethod = i instanceof MethodInsnNode;
       boolean isField = i instanceof FieldInsnNode;
@@ -75,9 +78,11 @@ public class Asm {
       if(isMethod || isField) {
         try {
           String owner = isMethod ? ((MethodInsnNode) i).owner : ((FieldInsnNode) i).owner;
+          String javaOwner = owner.replace("/", ".");
 
-          Class<?> javaClass = Class.forName(owner.replace("/", "."), false, mappingClassLoader);
-          if(isInDifferentClassLoader(classLoaders, targetClassLoader, javaClass.getClassLoader())) {
+          Class<?> javaClass = Class.forName(javaOwner, false, mappingClassLoader);
+          if(isInDifferentClassLoader(targetClassLoader, javaClass.getClassLoader())) {
+            JavaInternals.exposeModule(targetClass, javaClass);
             classCache.setClassLoader(javaClass.getClassLoader());
             ClassFile ownerClass = classCache.findClass(javaClass);
 
@@ -119,9 +124,13 @@ public class Asm {
   }
 
   public static ClassLoader findOverlappingClassLoader(Set<ClassLoader> cache, ClassLoader first, ClassLoader second) {
+    if (first == null) {
+      return null;
+    }
+
     cache.clear();
 
-    ClassLoader classLoader = first;
+    ClassLoader classLoader = first.getParent();
     while (classLoader != null) {
       cache.add(classLoader);
       classLoader = classLoader.getParent();
@@ -138,9 +147,20 @@ public class Asm {
     return null;
   }
 
-  public static boolean isInDifferentClassLoader(
-     Set<ClassLoader> cache, ClassLoader first, ClassLoader second
-  ) {
-    return findOverlappingClassLoader(cache, first, second) != null;
+  public static boolean isInDifferentClassLoader(ClassLoader first, ClassLoader second) {
+    if (first == second) {
+      return false;
+    }
+
+    ClassLoader classLoader = first;
+    while (classLoader != null) {
+      if (classLoader == second) {
+        return false;
+      }
+
+      classLoader = classLoader.getParent();
+    }
+
+    return true;
   }
 }
