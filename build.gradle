@@ -11,36 +11,44 @@ allprojects {
   }
 
   dependencies {
+    api 'org.ow2.asm:asm:9.5'
+    api 'org.ow2.asm:asm-tree:9.5'
+    api 'org.ow2.asm:asm-util:9.5'
+
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
   }
 
+  compileJava {
+    options.compilerArgs += [
+      '--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED'
+    ]
+  }
+
   java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 
     withSourcesJar()
     withJavadocJar()
   }
 
   test {
+    // Test without attach mechanism and dynamic agent loading
+    jvmArgs([
+      '-XX:+DisableAttachMechanism',
+      '-XX:-EnableDynamicAgentLoading'
+    ])
+
     useJUnitPlatform()
   }
 }
 
-dependencies {
-  api 'org.ow2.asm:asm:9.5'
-  api 'org.ow2.asm:asm-tree:9.5'
-  api 'org.ow2.asm:asm-util:9.5'
-  api 'org.ow2.asm:asm-commons:9.5'
-
-  int classVersion = (int) Double.parseDouble(System.getProperty("java.class.version"));
-  if (classVersion < 53) {
-    compileOnly files("${System.getProperty("java.home")}/../lib/tools.jar")
-  }
-}
-
 group = "io.github.usernugget"
-version = "1.1.0"
+version = "2.0.0-beta"
+
+javadoc {
+  options.addStringOption('-add-exports', 'java.base/jdk.internal.misc=ALL-UNNAMED')
+}
 
 publishing {
   publications {
