@@ -34,6 +34,8 @@ import io.github.usernugget.redefiner.util.asm.io.ClassSerializer;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.Comparator;
+import java.util.function.ToIntFunction;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
@@ -106,6 +108,38 @@ public class ClassRedefiner implements Closeable {
           this.handlerTypes.eachHandler(node.desc, desc ->
             desc.handler.handleClass(classChange))
         );
+
+        mappingClass.methods.sort(Comparator.comparingInt(new ToIntFunction<MethodNode>() {
+          public int priority;
+
+          @Override
+          public int applyAsInt(MethodNode key) {
+            this.priority = 0;
+            ((ClassMethod) key).eachAnnotation(node -> {
+              ClassRedefiner.this.handlerTypes.eachHandler(
+                node.desc, desc -> this.priority += desc.priority
+              );
+            });
+
+            return this.priority;
+          }
+        }).reversed());
+
+        mappingClass.fields.sort(Comparator.comparingInt(new ToIntFunction<FieldNode>() {
+          public int priority;
+
+          @Override
+          public int applyAsInt(FieldNode key) {
+            this.priority = 0;
+            ((ClassField) key).eachAnnotation(node -> {
+              ClassRedefiner.this.handlerTypes.eachHandler(
+                node.desc, desc -> this.priority += desc.priority
+              );
+            });
+
+            return this.priority;
+          }
+        }).reversed());
 
         for (MethodNode method : mappingClass.methods) {
           ClassMethod mappingMethod = (ClassMethod) method;

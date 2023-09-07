@@ -30,7 +30,7 @@ public class HandlerTypes extends SortedList<HandlerDesc> {
     if (desc == null) throw new NullPointerException("desc is null");
     if (handler == null) throw new NullPointerException("handler is null");
 
-    return this.add(priority, new HandlerDesc(handler, desc));
+    return this.add(priority, new HandlerDesc(priority, handler, desc));
   }
 
   public void eachHandler(String desc, Consumer<HandlerDesc> consumer) {
@@ -42,10 +42,12 @@ public class HandlerTypes extends SortedList<HandlerDesc> {
   }
 
   public static final class HandlerDesc {
+    public int priority;
     public Handler handler;
     public String desc;
 
-    public HandlerDesc(Handler handler, String desc) {
+    public HandlerDesc(int priority, Handler handler, String desc) {
+      this.priority = priority;
       this.handler = handler;
       this.desc = desc;
     }
