@@ -16,6 +16,7 @@
 
 package io.github.usernugget.redefiner.util.asm;
 
+import io.github.usernugget.redefiner.util.asm.instruction.immutable.InjectedInsnNode;
 import java.util.List;
 import java.util.function.Consumer;
 import org.objectweb.asm.Opcodes;
@@ -36,6 +37,10 @@ import org.objectweb.asm.tree.VarInsnNode;
 public final class Ops {
   public static InsnNode op(int op) {
     return new InsnNode(op);
+  }
+
+  public static InsnNode injectedOp(int op) {
+    return new InjectedInsnNode(op);
   }
 
   public static IntInsnNode intOp(int op, int value) {
@@ -185,6 +190,10 @@ public final class Ops {
 
   public static InsnNode returnOp(String desc) {
     return returnOp(Type.getType(desc));
+  }
+
+  public static InsnNode injectedReturnOp(Type type) {
+    return injectedOp(type.getOpcode(Opcodes.IRETURN));
   }
 
   public static InsnNode returnOp(Type type) {

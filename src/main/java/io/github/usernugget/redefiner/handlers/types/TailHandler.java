@@ -20,6 +20,7 @@ import io.github.usernugget.redefiner.changes.MethodChange;
 import io.github.usernugget.redefiner.handlers.Handler;
 import io.github.usernugget.redefiner.util.asm.ClassMethod;
 import io.github.usernugget.redefiner.util.asm.instruction.Insns;
+import io.github.usernugget.redefiner.util.asm.instruction.immutable.Injected;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -44,7 +45,8 @@ public class TailHandler implements Handler {
     for (AbstractInsnNode instruction : targetCode) {
       // TODO: RET?
       if (instruction.getOpcode() >= Opcodes.IRETURN &&
-          instruction.getOpcode() <= Opcodes.RETURN) {
+          instruction.getOpcode() <= Opcodes.RETURN &&
+          !(instruction instanceof Injected)) {
         Insns jump = new Insns();
         if (returnType.getSort() != Type.VOID) {
           jump.storeOp(returnType, returnVariable);
@@ -60,7 +62,8 @@ public class TailHandler implements Handler {
 
     Insns mappingCode = mapping.getInstructions();
     for (AbstractInsnNode instruction : mappingCode) {
-      if (instruction.getOpcode() == Opcodes.RETURN) {
+      if (instruction.getOpcode() == Opcodes.RETURN &&
+          !(instruction instanceof Injected)) {
         Insns ret = new Insns();
         if (returnType.getSort() != Type.VOID) {
           ret.loadOp(returnType, returnVariable);

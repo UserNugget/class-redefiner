@@ -21,6 +21,7 @@ import io.github.usernugget.redefiner.handlers.Handler;
 import io.github.usernugget.redefiner.util.asm.ClassMethod;
 import io.github.usernugget.redefiner.util.asm.Ops;
 import io.github.usernugget.redefiner.util.asm.instruction.Insns;
+import io.github.usernugget.redefiner.util.asm.instruction.immutable.Injected;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -40,7 +41,8 @@ public class HeadHandler implements Handler {
 
     Insns mappingCode = mapping.getInstructions();
     for (AbstractInsnNode instruction : mappingCode) {
-      if (instruction.getOpcode() == Opcodes.RETURN) {
+      if (instruction.getOpcode() == Opcodes.RETURN &&
+          !(instruction instanceof Injected)) {
         mappingCode.set(instruction, Ops.jumpOp(Opcodes.GOTO, targetBase));
       }
     }

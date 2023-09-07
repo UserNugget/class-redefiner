@@ -14,18 +14,8 @@
  * limitations under the License.
  */
 
-package io.github.usernugget.redefiner.handlers;
+package io.github.usernugget.redefiner.util.asm.instruction.immutable;
 
-public class Op {
-  public static void returnOp() { }
+public interface Injected {
 
-  public static void returnOp(boolean value) { }
-  public static void returnOp(byte value) { }
-  public static void returnOp(short value) { }
-  public static void returnOp(char value) { }
-  public static void returnOp(int value) { }
-  public static void returnOp(float value) { }
-  public static void returnOp(long value) { }
-  public static void returnOp(double value) { }
-  public static void returnOp(Object value) { }
 }

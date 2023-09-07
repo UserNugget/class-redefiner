@@ -17,6 +17,7 @@
 package io.github.usernugget.redefiner.util.asm;
 
 import io.github.usernugget.redefiner.util.asm.instruction.Insns;
+import io.github.usernugget.redefiner.util.asm.instruction.immutable.Injected;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -91,12 +92,12 @@ public class ClassMethod extends MethodNode implements AccessFlags {
   public void increaseVariableIndex(int idx) {
     int size = this.descSize();
     for (AbstractInsnNode inst : this.instructions) {
-      if (inst instanceof VarInsnNode) {
+      if (inst instanceof VarInsnNode && !(inst instanceof Injected)) {
         VarInsnNode var = (VarInsnNode) inst;
         if (var.var > size) {
           var.var += idx;
         }
-      } else if (inst instanceof IincInsnNode) {
+      } else if (inst instanceof IincInsnNode && !(inst instanceof Injected)) {
         IincInsnNode iinc = (IincInsnNode) inst;
         if (iinc.var > size) {
           iinc.var += idx;
