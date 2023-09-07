@@ -21,6 +21,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Replace target code with the mapping code
+ * <p>
+ * Example:
+ * <pre>{@code
+ * @Replace
+ * public static int replace() {
+ *   return 5;
+ * }
+ * }</pre>
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.CONSTRUCTOR })
 public @interface Replace {

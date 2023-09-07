@@ -21,6 +21,24 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Calls mapping method to let it change bytecode directly.
+ * <p>
+ * Example:
+ * <pre>{@code
+ * @Raw
+ * public static void raw(MethodChange change) {
+ *   ClassMethod target = change.findTargetMethod();
+ *   Insns targetCode = target.getInstructions();
+ *
+ *   targetCode.clear();
+ *
+ *   // return 2;
+ *   targetCode.ldc(2);
+ *   targetCode.op(Opcodes.IRETURN);
+ * }
+ * }</pre>
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Raw {

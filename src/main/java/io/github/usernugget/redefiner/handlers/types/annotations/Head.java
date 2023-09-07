@@ -21,6 +21,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Prepend mapping code to the target code
+ * <p>
+ * Example:
+ * <pre>{@code
+ * @Head
+ * public static void method() {
+ *   Op.returnOp(1);
+ * }
+ * }</pre>
+ */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Head {

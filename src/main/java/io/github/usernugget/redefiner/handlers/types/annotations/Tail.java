@@ -21,6 +21,18 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Append mapping code to return of the target code,
+ * works like a finally in the try-catch block
+ * <p>
+ * Example:
+ * <pre>{@code
+ * @Tail
+ * public static void method() {
+ *   Op.return(1024);
+ * }
+ * }</pre>
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.CONSTRUCTOR })
 public @interface Tail {
