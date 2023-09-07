@@ -19,15 +19,14 @@ package io.github.usernugget.redefiner.handlers.types;
 import io.github.usernugget.redefiner.changes.MethodChange;
 import io.github.usernugget.redefiner.handlers.Handler;
 import io.github.usernugget.redefiner.util.asm.ClassMethod;
-import org.objectweb.asm.tree.MethodNode;
 
 public class ReplaceHandler implements Handler {
   @Override
   public void handleMethod(MethodChange change) {
     ClassMethod mapping = change.getMappingMethod();
+    ClassMethod target = change.findTargetMethod();
 
-    MethodNode mappingCopy = new MethodNode();
-    mapping.instructions.accept(mappingCopy);
-    change.findTargetMethod().instructions = mappingCopy.instructions;
+    target.instructions = mapping.instructions;
+    target.tryCatchBlocks = mapping.tryCatchBlocks;
   }
 }

@@ -49,5 +49,7 @@ public class HeadHandler implements Handler {
 
     mappingCode.add(targetBase);
     target.getInstructions().insert(mappingCode);
+
+    target.addTryCatchBlocks(mapping.tryCatchBlocks);
   }
 }

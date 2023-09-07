@@ -19,6 +19,8 @@ package io.github.usernugget.redefiner.util.asm;
 import io.github.usernugget.redefiner.util.asm.instruction.Insns;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -26,6 +28,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
@@ -104,6 +107,16 @@ public class ClassMethod extends MethodNode implements AccessFlags {
 
   public void eachAnnotation(Consumer<AnnotationNode> consumer) {
     Ops.eachAnnotation(consumer, this.visibleAnnotations, this.invisibleAnnotations);
+  }
+
+  public void addTryCatchBlocks(List<TryCatchBlockNode> tryCatchBlocks) {
+    if (tryCatchBlocks == null) return;
+
+    if (this.tryCatchBlocks == null) {
+      this.tryCatchBlocks = new ArrayList<>(tryCatchBlocks);
+    } else {
+      this.tryCatchBlocks.addAll(tryCatchBlocks);
+    }
   }
 
   public String toReadableBytecode() {

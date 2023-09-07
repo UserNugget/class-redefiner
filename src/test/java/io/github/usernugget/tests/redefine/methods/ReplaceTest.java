@@ -41,17 +41,29 @@ public class ReplaceTest extends AbstractRedefineTest {
 
     @Replace
     public PlainClassMapping() {
-      this.field = 4;
+      try {
+        this.field = 4;
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
     }
 
     @Replace
     public int test(boolean value) {
-      return 1;
+      try {
+        return 1;
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
     }
 
     @Replace
     public static int testStatic(boolean value) {
-      return 1;
+      try {
+        return 1;
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
     }
   }
 

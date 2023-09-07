@@ -74,5 +74,7 @@ public class TailHandler implements Handler {
 
     targetCode.add(mappingBase);
     targetCode.add(mappingCode);
+
+    target.addTryCatchBlocks(mapping.tryCatchBlocks);
   }
 }

@@ -42,21 +42,33 @@ public class HeadTest extends AbstractRedefineTest {
 
     @Head(method = "<init>")
     public void initializer() {
-      this.field = 4;
+      try {
+          this.field = 4;
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
     }
 
     @Head
     public void test(boolean value) {
-      if (value) {
-        Op.returnOp(1);
-      }
+      try {
+        if (value) {
+          Op.returnOp(1);
+        }
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
     }
 
     @Head
     public static void testStatic(boolean value) {
-      if (value) {
-        Op.returnOp(1);
-      }
+      try {
+        if (value) {
+          Op.returnOp(1);
+        }
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
     }
   }
 

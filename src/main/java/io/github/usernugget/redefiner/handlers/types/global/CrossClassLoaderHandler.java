@@ -42,6 +42,7 @@ import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MultiANewArrayInsnNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
 // Allowing mapping and target to have intersecting code
@@ -87,6 +88,8 @@ public class CrossClassLoaderHandler implements Handler {
     ClassFile mapping = change.getMappingClass();
     ClassFile target = change.getTargetClass();
 
+    ClassMethod mappingMethod = change.getMappingMethod();
+
     ClassLoader mappingLoader = change.getClassLoader();
     ClassLoader targetLoader = change.getTargetJavaClass().getClassLoader();
 
@@ -98,7 +101,23 @@ public class CrossClassLoaderHandler implements Handler {
     Map<ClassLoader, Wrapper> wrappers = new IdentityHashMap<>();
 
     try {
-      Insns mappingCode = change.getMappingMethod().getInstructions();
+      if (mappingMethod.tryCatchBlocks != null) {
+        for (TryCatchBlockNode catchNode : mappingMethod.tryCatchBlocks) {
+          if (catchNode.type == null) continue; // finally block
+
+          if (!this.interactable(
+            catchNode.type, target,
+            accessibleLoaders,
+            mappingLoader, targetLoader
+          )) {
+            throw new UnsupportedOperationException(
+              "try-catch block is using class from inaccessible classloader"
+            );
+          }
+        }
+      }
+
+      Insns mappingCode = mappingMethod.getInstructions();
       for (AbstractInsnNode instruction : mappingCode) {
         if (instruction instanceof MethodInsnNode) {
           MethodInsnNode method = (MethodInsnNode) instruction;

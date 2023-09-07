@@ -42,21 +42,33 @@ public class TailTest extends AbstractRedefineTest {
 
     @Tail(method = "<init>")
     public void initializer() {
-      this.field = 4;
+      try {
+        this.field = 4;
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
     }
 
     @Tail
     public void test(boolean value) {
-      if (value) {
-        Op.returnOp(1);
-      }
+      try {
+        if (value) {
+          Op.returnOp(1);
+        }
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
     }
 
     @Tail
     public static void testStatic(boolean value) {
-      if (value) {
-        Op.returnOp(1);
-      }
+      try {
+        if (value) {
+          Op.returnOp(1);
+        }
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
     }
   }
 
