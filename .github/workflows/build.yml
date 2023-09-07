@@ -8,7 +8,7 @@ jobs:
         java: [ '11', '17', '20' ]
         distribution: [ 'semeru', 'temurin' ]
 
-    name: Test on ${{ matrix.os }} with Java ${{ matrix.java }} ({{ matrix.distribution }})
+    name: Test on ${{ matrix.os }} with Java ${{ matrix.java }} (${{ matrix.distribution }})
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
