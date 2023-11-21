@@ -19,7 +19,6 @@ package io.github.usernugget.redefiner.agent.impl;
 import io.github.usernugget.redefiner.ClassRedefiner;
 import io.github.usernugget.redefiner.agent.AbstractAgent;
 import io.github.usernugget.redefiner.throwables.InitializationException;
-import io.github.usernugget.redefiner.util.JavaInternals;
 import io.github.usernugget.redefiner.util.asm.ClassField;
 import io.github.usernugget.redefiner.util.asm.ClassFile;
 import io.github.usernugget.redefiner.util.asm.ClassMethod;
@@ -72,21 +71,6 @@ public class InstrumentationAgent extends AbstractAgent implements ClassFileTran
     }
 
     this.instrumentation = instrumentation;
-
-    try {
-      JavaInternals.TRUSTED.findSetter(
-        this.instrumentation.getClass(),
-        "mEnvironmentSupportsRetransformClassesKnown", boolean.class
-      ).invoke(this.instrumentation, true);
-
-      JavaInternals.TRUSTED.findSetter(
-        this.instrumentation.getClass(),
-        "mEnvironmentSupportsRetransformClasses", boolean.class
-      ).invoke(this.instrumentation, true);
-    } catch (Throwable throwable) {
-      throwable.printStackTrace();
-    }
-
     this.instrumentation.addTransformer(this, true);
 
     this.capatibilities = lookupCapatibilities(redefiner);
