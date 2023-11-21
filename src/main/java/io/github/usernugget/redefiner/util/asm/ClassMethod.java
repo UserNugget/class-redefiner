@@ -70,23 +70,16 @@ public class ClassMethod extends MethodNode implements AccessFlags {
     return maxVariable() + 1;
   }
 
+  public int newVariable(ClassMethod pendingCode) {
+    return maxVariable(pendingCode) + 1;
+  }
+
   public int maxVariable() {
-    int size = this.descSize();
-    for (AbstractInsnNode inst : this.instructions) {
-      if (inst instanceof VarInsnNode) {
-        VarInsnNode var = (VarInsnNode) inst;
-        int nodeSize = var.getOpcode() == Opcodes.DLOAD ||
-                       var.getOpcode() == Opcodes.DSTORE ||
-                       var.getOpcode() == Opcodes.LLOAD ||
-                       var.getOpcode() == Opcodes.LSTORE ? 2 : 1;
+    return Ops.maxVariable(this);
+  }
 
-        size = Math.max(size, var.var + nodeSize);
-      } else if (inst instanceof IincInsnNode) {
-        size = Math.max(size, ((IincInsnNode) inst).var + 1);
-      }
-    }
-
-    return size;
+  public int maxVariable(ClassMethod pendingCode) {
+    return Math.max(Ops.maxVariable(this), Ops.maxVariable(pendingCode));
   }
 
   public void increaseVariableIndex(int idx) {
@@ -138,5 +131,11 @@ public class ClassMethod extends MethodNode implements AccessFlags {
   @Override
   public String toString() {
     return this.owner.name + "::" + this.name + this.desc;
+  }
+
+  public ClassMethod copy() {
+    ClassMethod method = new ClassMethod(this.owner, this.access, this.name, this.desc);
+    this.accept(method);
+    return method;
   }
 }

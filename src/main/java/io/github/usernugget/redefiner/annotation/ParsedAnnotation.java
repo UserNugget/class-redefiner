@@ -74,10 +74,14 @@ public class ParsedAnnotation {
   }
 
   public String getString(String key) {
-    return (String) this.get(key);
+    return this.get(key);
   }
 
-  public Object get(String key) {
-    return this.values.get(key);
+  public <T> T get(String key) {
+    return (T) this.values.get(key);
+  }
+
+  public <T> T getOrDefault(String key, T value) {
+    return (T) this.values.getOrDefault(key, value);
   }
 }

@@ -16,13 +16,17 @@
 
 package io.github.usernugget.redefiner.handlers;
 
+import io.github.usernugget.redefiner.handlers.types.GetFieldHandler;
 import io.github.usernugget.redefiner.handlers.types.HeadHandler;
 import io.github.usernugget.redefiner.handlers.types.RawHandler;
 import io.github.usernugget.redefiner.handlers.types.ReplaceHandler;
+import io.github.usernugget.redefiner.handlers.types.SetFieldHandler;
 import io.github.usernugget.redefiner.handlers.types.TailHandler;
+import io.github.usernugget.redefiner.handlers.types.annotations.GetField;
 import io.github.usernugget.redefiner.handlers.types.annotations.Head;
 import io.github.usernugget.redefiner.handlers.types.annotations.Raw;
 import io.github.usernugget.redefiner.handlers.types.annotations.Replace;
+import io.github.usernugget.redefiner.handlers.types.annotations.SetField;
 import io.github.usernugget.redefiner.handlers.types.annotations.Tail;
 import io.github.usernugget.redefiner.handlers.types.global.CrossClassLoaderHandler;
 import io.github.usernugget.redefiner.handlers.types.global.OpHandler;
@@ -37,6 +41,8 @@ public class StandardHandlerTypes extends HandlerTypes {
     this.add(3001, "*", new OpHandler());
     this.add(3000, "*", new CrossClassLoaderHandler());
 
+    this.add(1004, Type.getType(GetField.class), new GetFieldHandler());
+    this.add(1003, Type.getType(SetField.class), new SetFieldHandler());
     this.add(1002, Type.getType(Replace.class), new ReplaceHandler());
     this.add(1001, Type.getType(Tail.class), new TailHandler());
     this.add(1000, Type.getType(Head.class), new HeadHandler());

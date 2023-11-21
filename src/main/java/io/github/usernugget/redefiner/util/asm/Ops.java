@@ -216,4 +216,23 @@ public final class Ops {
       }
     }
   }
+
+  public static int maxVariable(ClassMethod method) {
+    int size = method.descSize();
+    for (AbstractInsnNode inst : method.instructions) {
+      if (inst instanceof VarInsnNode) {
+        VarInsnNode var = (VarInsnNode) inst;
+        int nodeSize = var.getOpcode() == Opcodes.DLOAD ||
+                       var.getOpcode() == Opcodes.DSTORE ||
+                       var.getOpcode() == Opcodes.LLOAD ||
+                       var.getOpcode() == Opcodes.LSTORE ? 2 : 1;
+
+        size = Math.max(size, var.var + nodeSize);
+      } else if (inst instanceof IincInsnNode) {
+        size = Math.max(size, ((IincInsnNode) inst).var + 1);
+      }
+    }
+
+    return size;
+  }
 }
