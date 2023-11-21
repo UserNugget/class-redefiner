@@ -184,7 +184,7 @@ public class InstrumentationAgent extends AbstractAgent implements ClassFileTran
   }
 
   /*
-   * You cannot modify primitive, array, hidden, contuation classes
+   * You cannot modify primitive, array, hidden, continuation classes
    * https://github.com/openjdk/jdk/blob/6edd786bf6d8b1008a292b26fc0f901cbae1d03b/src/hotspot/share/prims/jvmtiRedefineClasses.cpp#L331-L351
    */
   @Override
