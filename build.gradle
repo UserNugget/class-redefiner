@@ -37,7 +37,7 @@ allprojects {
     // Test without attach mechanism and dynamic agent loading
     jvmArgs([
       '-XX:+DisableAttachMechanism',
-      '-XX:-EnableDynamicAgentLoading'
+      // '-XX:-EnableDynamicAgentLoading' // TODO: latest OpenJ9 releases checks for that properly
     ])
 
     useJUnitPlatform()

@@ -37,6 +37,25 @@ public class OpenJ9Attach extends HotspotAttach {
   protected void loadAgent(Path agentFile) throws InitializationException {
     try {
       Class<?> attachment = Class.forName("openj9.internal.tools.attach.target.Attachment");
+      String error = (String) JavaInternals.TRUSTED.findStatic(attachment, "loadAgentLibrary",
+        MethodType.methodType(String.class, String.class, String.class, boolean.class)
+      ).invoke("instrument", agentFile + "=", true);
+
+      if (error != null) {
+        throw new InitializationException("OpenJ9 modern injection failed: " + error);
+      }
+    } catch (NoSuchMethodException e) {
+      this.loadAgentLegacy(agentFile);
+    } catch (InitializationException t) {
+      throw t;
+    } catch (Throwable t) {
+      throw new InitializationException("OpenJ9 modern injection failed", t);
+    }
+  }
+
+  protected void loadAgentLegacy(Path agentFile) throws InitializationException {
+    try {
+      Class<?> attachment = Class.forName("openj9.internal.tools.attach.target.Attachment");
       Object attachmentObject = JavaInternals.UNSAFE.allocateInstance(attachment);
 
       int ret = (int) JavaInternals.TRUSTED.findVirtual(attachment, "loadAgentLibraryImpl",
@@ -44,14 +63,14 @@ public class OpenJ9Attach extends HotspotAttach {
       ).invoke(attachmentObject, ClassLoader.getSystemClassLoader(), "instrument", agentFile + "=", true);
 
       if (ret == -1) {
-        throw new IllegalStateException("internal OpenJ9 error");
+        throw new IllegalStateException("internal error");
       }
 
       if (ret != 0) {
         throw new IllegalStateException("unknown error: " + ret);
       }
     } catch (Throwable t) {
-      throw new InitializationException("OpenJ9 failed to inject", t);
+      throw new InitializationException("OpenJ9 legacy injection failed", t);
     }
   }
 }
