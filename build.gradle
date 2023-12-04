@@ -52,7 +52,7 @@ allprojects {
 }
 
 group = "io.github.usernugget"
-version = "2.0.0-beta"
+version = "2.0.0"
 
 javadoc {
   options.addStringOption('-add-exports', 'java.base/jdk.internal.misc=ALL-UNNAMED')
