@@ -24,7 +24,7 @@ import java.util.TreeMap;
 
 public class SortedList<T> {
   private static final Comparator<Integer> SORTER =
-    Comparator.comparingInt(priority -> -priority); // 0, 1, 2, 3 ... 1000
+    Comparator.comparingInt(priority -> -priority); // 1000, 999, 998, 997 ... 0
 
   private final Map<Integer, T> values;
 
