@@ -90,11 +90,8 @@ public class CrossClassLoaderHandler implements Handler {
 
     ClassMethod mappingMethod = change.getMappingMethod();
 
-    ClassLoader mappingLoader = change.getClassLoader();
-    ClassLoader targetLoader = change.getTargetJavaClass().getClassLoader();
-
-    Set<ClassLoader> accessibleLoaders =
-      this.findParents(change.getTargetJavaClass().getClassLoader());
+    ClassLoader mappingLoader = change.getMappingJavaClass().getClassLoader();
+    ClassLoader targetLoader = change.getClassLoader();
 
     String targetName = change.getTargetClass().name;
 
@@ -106,12 +103,10 @@ public class CrossClassLoaderHandler implements Handler {
           if (catchNode.type == null) continue; // finally block
 
           if (!this.interactable(
-            catchNode.type, target,
-            accessibleLoaders,
-            mappingLoader, targetLoader
+            catchNode.type, target, targetLoader
           )) {
             throw new UnsupportedOperationException(
-              "try-catch block is using class from inaccessible classloader"
+              "try-catch block is using class from inaccessible classloader: " + catchNode.type
             );
           }
         }
@@ -122,9 +117,7 @@ public class CrossClassLoaderHandler implements Handler {
         if (instruction instanceof MethodInsnNode) {
           MethodInsnNode method = (MethodInsnNode) instruction;
           if (!this.interactable(
-            method.owner, target,
-            accessibleLoaders,
-            mappingLoader, targetLoader
+            method.owner, target, targetLoader
           )) {
             // FIXME: trick frames to make it think this is normal
             if (method.name.equals("<init>")) {
@@ -157,9 +150,7 @@ public class CrossClassLoaderHandler implements Handler {
         } else if (instruction instanceof FieldInsnNode) {
           FieldInsnNode field = (FieldInsnNode) instruction;
           if (!this.interactable(
-            field.owner, target,
-            accessibleLoaders,
-            mappingLoader, targetLoader
+            field.owner, target, targetLoader
           )) {
             Wrapper wrapper = this.findWrapper(
               wrappers, target.name, mappingLoader, targetLoader
@@ -192,24 +183,18 @@ public class CrossClassLoaderHandler implements Handler {
           InvokeDynamicInsnNode invokeDynamic = (InvokeDynamicInsnNode) instruction;
 
           boolean replace = !this.interactable(
-            invokeDynamic.bsm.getOwner(), target,
-            accessibleLoaders,
-            mappingLoader, targetLoader
+            invokeDynamic.bsm.getOwner(), target, targetLoader
           );
 
           if (!replace) {
             for (Object arg : invokeDynamic.bsmArgs) {
               if (arg instanceof Handle) {
                 replace = !this.interactable(
-                  ((Handle) arg).getOwner(), target,
-                  accessibleLoaders,
-                  mappingLoader, targetLoader
+                  ((Handle) arg).getOwner(), target, targetLoader
                 );
               } else if (arg instanceof Type) {
                 replace = !this.interactable(
-                  (Type) arg, target,
-                  accessibleLoaders,
-                  mappingLoader, targetLoader
+                  (Type) arg, target, targetLoader
                 );
               }
 
@@ -261,9 +246,7 @@ public class CrossClassLoaderHandler implements Handler {
             }
 
             if (!this.interactable(
-              className, target,
-              accessibleLoaders,
-              mappingLoader, targetLoader
+              className, target, targetLoader
             )) {
               Wrapper wrapper = this.findWrapper(
                 wrappers, target.name, mappingLoader, targetLoader
@@ -296,9 +279,7 @@ public class CrossClassLoaderHandler implements Handler {
           if (type.getOpcode() == Opcodes.NEW) continue;
 
           if (!this.interactable(
-            type.desc, target,
-            accessibleLoaders,
-            mappingLoader, targetLoader
+            type.desc, target, targetLoader
           )) {
             Wrapper wrapper = this.findWrapper(
               wrappers, target.name, mappingLoader, targetLoader
@@ -352,9 +333,7 @@ public class CrossClassLoaderHandler implements Handler {
           Type element = type.getElementType();
 
           if (!this.interactable(
-            element.getInternalName(), target,
-            accessibleLoaders,
-            mappingLoader, targetLoader
+            element.getInternalName(), target, targetLoader
           )) {
             Wrapper wrapper = this.findWrapper(
               wrappers, target.name, mappingLoader, targetLoader
@@ -401,11 +380,12 @@ public class CrossClassLoaderHandler implements Handler {
   ) {
     ClassLoader intersection = null;
 
+    Set<ClassLoader> mappings = this.findParents(mapping);
     Set<ClassLoader> targets = this.findParents(target);
     for (ClassLoader parent : this.findParents(
       this.findClass(name, mapping, target).getClassLoader()
     )) {
-      if (targets.contains(parent)) {
+      if (targets.contains(parent) && mappings.contains(parent)) {
         intersection = parent;
         break;
       }
@@ -435,32 +415,24 @@ public class CrossClassLoaderHandler implements Handler {
   }
 
   private boolean interactable(
-    Type type, ClassFile target,
-    Set<ClassLoader> accessibleLoaders,
-    ClassLoader mappingLoader, ClassLoader targetLoader
+    Type type, ClassFile classFile, ClassLoader classLoader
   ) {
     if (type.getSort() == Type.METHOD) {
       for (Type argumentType : type.getArgumentTypes()) {
         if (!this.interactable(
-          argumentType, target,
-          accessibleLoaders,
-          mappingLoader, targetLoader
+          argumentType, classFile, classLoader
         )) {
           return false;
         }
       }
 
       return !this.interactable(
-        type.getReturnType(), target,
-        accessibleLoaders,
-        mappingLoader, targetLoader
+        type.getReturnType(), classFile, classLoader
       );
     } else if (type.getSort() == Type.OBJECT ||
                type.getSort() == Type.ARRAY) {
       return !this.interactable(
-        type.getInternalName(), target,
-        accessibleLoaders,
-        mappingLoader, targetLoader
+        type.getInternalName(), classFile, classLoader
       );
     }
 
@@ -468,19 +440,18 @@ public class CrossClassLoaderHandler implements Handler {
   }
 
   private boolean interactable(
-    String owner, ClassFile target,
-    Set<ClassLoader> accessibleLoaders,
-    ClassLoader mappingLoader, ClassLoader targetLoader
+    String owner, ClassFile target, ClassLoader classLoader
   ) {
     if (owner.equals(target.name)) {
       return true;
     }
 
-    ClassLoader loader = this.findClass(
-      owner, mappingLoader, targetLoader
-    ).getClassLoader();
-
-    return loader == null || accessibleLoaders.contains(loader);
+    try {
+      Class.forName(owner.replace('/', '.'), false, classLoader);
+      return true;
+    } catch (Throwable throwable) {
+      return false;
+    }
   }
 
   protected Set<ClassLoader> findParents(ClassLoader classLoader) {
