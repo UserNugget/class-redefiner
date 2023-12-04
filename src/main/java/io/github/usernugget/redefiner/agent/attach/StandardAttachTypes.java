@@ -17,9 +17,11 @@
 package io.github.usernugget.redefiner.agent.attach;
 
 import io.github.usernugget.redefiner.agent.attach.types.HotspotAttach;
+import io.github.usernugget.redefiner.agent.attach.types.OpenJ9Attach;
 
 public class StandardAttachTypes extends AttachTypes {
   public StandardAttachTypes() {
     add(1000, new HotspotAttach());
+    add(1001, new OpenJ9Attach());
   }
 }
