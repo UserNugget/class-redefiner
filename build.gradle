@@ -35,10 +35,17 @@ allprojects {
 
   test {
     // Test without attach mechanism and dynamic agent loading
-    jvmArgs([
+    var arguments = [
       '-XX:+DisableAttachMechanism',
-      // '-XX:-EnableDynamicAgentLoading' // TODO: latest OpenJ9 releases checks for that properly
-    ])
+      '-XX:-EnableDynamicAgentLoading'
+    ]
+
+    // TODO: find a way to avoid this check on latest OpenJ9
+    if (System.getProperty("java.vm.vendor") == "Eclipse OpenJ9") {
+      arguments.remove('-XX:-EnableDynamicAgentLoading')
+    }
+
+    jvmArgs(arguments)
 
     useJUnitPlatform()
   }
