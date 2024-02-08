@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import io.github.usernugget.redefiner.changes.MethodChange;
 import io.github.usernugget.redefiner.handlers.Handler;
 import io.github.usernugget.redefiner.handlers.Op;
 import io.github.usernugget.redefiner.util.JavaInternals;
+import io.github.usernugget.redefiner.util.Jigsaw;
 import io.github.usernugget.redefiner.util.asm.ClassField;
 import io.github.usernugget.redefiner.util.asm.ClassFile;
 import io.github.usernugget.redefiner.util.asm.ClassMethod;
@@ -78,6 +79,10 @@ public class CrossClassLoaderHandler implements Handler {
       this.reflection.defineClasses(
         serializer, this.overlappingLoader, this.targetLoader
       );
+    }
+
+    public ClassLoader getOverlappingLoader() {
+      return this.overlappingLoader;
     }
   }
 
@@ -139,6 +144,8 @@ public class CrossClassLoaderHandler implements Handler {
             );
 
             Class<?> owner = this.findClass(method.owner, mappingLoader, targetLoader);
+            Jigsaw.implAddReads(owner, wrapper.getOverlappingLoader().getUnnamedModule());
+
             ClassMethod ownerMethod = serializer.readClass(owner, ClassReader.SKIP_CODE)
               .findMethod(method.name, method.desc);
 
@@ -166,6 +173,7 @@ public class CrossClassLoaderHandler implements Handler {
             );
 
             Class<?> owner = this.findClass(field.owner, mappingLoader, targetLoader);
+            Jigsaw.implAddReads(owner, wrapper.getOverlappingLoader().getUnnamedModule());
 
             ClassField ownerField = serializer.readClass(owner, ClassReader.SKIP_CODE)
               .findField(field.name, field.desc);
@@ -391,6 +399,7 @@ public class CrossClassLoaderHandler implements Handler {
     }
 
     for (Wrapper wrapper : wrappers.values()) {
+      Jigsaw.implAddReads(change.getTargetJavaClass(), wrapper.getOverlappingLoader().getUnnamedModule());
       wrapper.define(serializer);
     }
   }
