@@ -87,20 +87,11 @@ public class CrossClassLoaderTest extends AbstractRedefineTest {
     }
   }
 
-  // Class for ClassLoader C
-  public static final class C {
-    public static Object create() {
-      return new C();
-    }
-  }
-
   @Mapping(targetClassName = "io.github.usernugget.tests.redefine.methods.CrossClassLoaderTest$A")
   public static final class BMapping {
     @Head
     public static void testStatic(boolean value) {
       if (value) {
-        C.create();
-
         // Test for method invocation and .class values
         Op.returnOp(A.value(
           B.class, B::alwaysTrue,
@@ -114,29 +105,18 @@ public class CrossClassLoaderTest extends AbstractRedefineTest {
   @Test
   void testInjection() throws Throwable {
     try (
-      FakeClassLoader intermediate = new FakeClassLoader(
-        null, null,
-        ClassLoader.getPlatformClassLoader()
-      );
-
       FakeClassLoader a = new FakeClassLoader(
         A.class.getName(),
         getClass().getClassLoader().getResource(A.class.getName().replace('.', '/') + ".class"),
-        intermediate
-      );
-      FakeClassLoader c = new FakeClassLoader(
-        C.class.getName(),
-        getClass().getClassLoader().getResource(C.class.getName().replace('.', '/') + ".class"),
-        intermediate
+        ClassLoader.getPlatformClassLoader()
       );
       FakeClassLoader b = new FakeClassLoader(
         B.class.getName(),
         getClass().getClassLoader().getResource(B.class.getName().replace('.', '/') + ".class"),
-        c
+        a
       )
     ) {
-      // Basically checks if mapped code can access 'ClassLoader B' classes from 'ClassLoader A'
-      REDEFINER.transformClass(a, BMapping.class);
+      REDEFINER.transformClass(b, BMapping.class);
 
       Class<?> A = a.loadClass(A.class.getName());
 
@@ -153,10 +133,6 @@ public class CrossClassLoaderTest extends AbstractRedefineTest {
     }
 
     private static URL[] makeJar(String name, URL klass) throws Throwable {
-      if (name == null) {
-        return new URL[0];
-      }
-
       Path path = Files.createTempFile("class-redefiner-test", ".jar");
       Runtime.getRuntime().addShutdownHook(new Thread(() -> {
         try {
