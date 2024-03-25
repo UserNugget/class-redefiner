@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,13 @@ public class MethodChange extends ClassChange {
 
   public ClassMethod findTargetMethod() {
     if (this.annotation.get("method") == null) {
-      return this.getTargetClass().findMethod(this.getMappingMethod().name, null);
+      ClassMethod mapping = this.getMappingMethod();
+      ClassMethod target = this.getTargetClass().findMethod(mapping.name, mapping.desc);
+      if (target == null) {
+        target = this.getTargetClass().findMethod(mapping.name, null);
+      }
+
+      return target;
     }
 
     return this.getTargetClass().findMethod(this.annotation.getMethod("method"));
