@@ -50,6 +50,13 @@ ClassRedefiner redefiner = new ClassRedefiner(
   new StandardHandlerTypes()
 );
 
+// Initialize javaagent
+try {
+  redefiner.initializeAgent();
+} catch (Throwable throwable) {
+  throw new IllegalStateException("unable to initialize javaagent", throwable);
+}
+
 // Redefine ClassValue using ClassValueMapping
 try {
   redefiner.transformClass(ClassValueMapping.class);
