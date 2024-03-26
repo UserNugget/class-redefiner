@@ -11,7 +11,7 @@ Library to modify classes at runtime using [Instrumentation](https://docs.oracle
 1) Add dependency
    + Using Gradle
      ```groovy
-     implementation("io.github.usernugget:class-redefiner:2.1.0")
+     implementation("io.github.usernugget:class-redefiner:2.1.1")
      ```
 
    + Using Maven
@@ -19,7 +19,7 @@ Library to modify classes at runtime using [Instrumentation](https://docs.oracle
      <dependency>
        <groupId>io.github.usernugget</groupId>
        <artifactId>class-redefiner</artifactId>
-       <version>2.1.0</version>
+       <version>2.1.1</version>
      </dependency>
      ```
 
