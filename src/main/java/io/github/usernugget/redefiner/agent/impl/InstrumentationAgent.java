@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import org.objectweb.asm.tree.InsnNode;
 import static java.util.Objects.requireNonNull;
 
 public class InstrumentationAgent extends AbstractAgent implements ClassFileTransformer {
+  private final ClassRedefiner redefiner;
   private final Instrumentation instrumentation;
 
   private static final class Transformation {
@@ -70,6 +71,7 @@ public class InstrumentationAgent extends AbstractAgent implements ClassFileTran
       throw new InitializationException("instrumentation is null");
     }
 
+    this.redefiner = redefiner;
     this.instrumentation = instrumentation;
     this.instrumentation.addTransformer(this, true);
 
@@ -217,11 +219,16 @@ public class InstrumentationAgent extends AbstractAgent implements ClassFileTran
       }
     } catch (UnmodifiableClassException e) {
       throw throwable("tried to modify an unmodifiable class", null, e);
+    } catch (ClassFormatError e) {
+      String bytecode = this.redefiner.getClassSerializer().readClass(data, 0).toReadableBytecode();
+      throw throwable("verification failed due to bad class structure, bytecode:\n" + bytecode, null, e);
     } catch (VerifyError error) {
+      String bytecode = this.redefiner.getClassSerializer().readClass(data, 0).toReadableBytecode();
+
       if (error.getMessage() == null) {
-        throw throwable("verification failed with unknown reason", null, error);
+        throw throwable("verification failed with unknown reason, bytecode:\n" + bytecode, null, error);
       } else {
-        throw throwable("verification failed", null, error);
+        throw throwable("verification failed, bytecode: \n" + bytecode, null, error);
       }
     } catch (Throwable throwable) {
       throw throwable("failed to rewrite class", null, throwable);

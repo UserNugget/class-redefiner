@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class JavaInternals {
          classLoader, null
       );
     } catch (Throwable e) {
-      throw new IllegalStateException("failed to define class " + classFile.name + ": " + classFile.toReadableBytecode(), e);
+      throw new IllegalStateException("failed to define class " + classFile.name + ":\n" + classFile.toReadableBytecode(), e);
     }
   }
 }
