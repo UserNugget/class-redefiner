@@ -172,7 +172,7 @@ public class CrossClassLoaderTest extends AbstractRedefineTest {
 
   @Mapping(targetClass = Array.class)
   public static final class ArrayMapping {
-    @Head
+    @Head(method = "newInstance(Ljava/lang/Class;[I)Ljava/lang/Object;")
     static void newInstance(Class<?> componentType, int... length) {
       if (componentType == null) {
         Op.returnOp(getBytes());
