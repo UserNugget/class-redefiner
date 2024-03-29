@@ -18,7 +18,6 @@ package io.github.usernugget.redefiner.handlers.types.global;
 
 import io.github.usernugget.redefiner.changes.MethodChange;
 import io.github.usernugget.redefiner.handlers.Handler;
-import io.github.usernugget.redefiner.handlers.Op;
 import io.github.usernugget.redefiner.util.JavaInternals;
 import io.github.usernugget.redefiner.util.Jigsaw;
 import io.github.usernugget.redefiner.util.asm.ClassField;
@@ -28,8 +27,8 @@ import io.github.usernugget.redefiner.util.asm.Ops;
 import io.github.usernugget.redefiner.util.asm.instruction.Insns;
 import io.github.usernugget.redefiner.util.asm.io.ClassSerializer;
 import io.github.usernugget.redefiner.util.asm.reflect.Reflection;
-import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -49,7 +48,6 @@ import org.objectweb.asm.tree.TypeInsnNode;
 // Allowing mapping and target to have intersecting code
 // if they are defined in different classloaders
 public class CrossClassLoaderHandler implements Handler {
-  private static final String OP_NAME = Type.getInternalName(Op.class);
 
   private static final class Wrapper {
     private final ClassLoader overlappingLoader;
@@ -144,7 +142,9 @@ public class CrossClassLoaderHandler implements Handler {
             );
 
             Class<?> owner = this.findClass(method.owner, mappingLoader, targetLoader);
-            Jigsaw.implAddReads(owner, wrapper.getOverlappingLoader().getUnnamedModule());
+            if (wrapper.getOverlappingLoader() != null) {
+              Jigsaw.implAddReads(owner, wrapper.getOverlappingLoader().getUnnamedModule());
+            }
 
             ClassMethod ownerMethod = serializer.readClass(owner, ClassReader.SKIP_CODE)
               .findMethod(method.name, method.desc);
@@ -173,7 +173,9 @@ public class CrossClassLoaderHandler implements Handler {
             );
 
             Class<?> owner = this.findClass(field.owner, mappingLoader, targetLoader);
-            Jigsaw.implAddReads(owner, wrapper.getOverlappingLoader().getUnnamedModule());
+            if (wrapper.getOverlappingLoader() != null) {
+              Jigsaw.implAddReads(owner, wrapper.getOverlappingLoader().getUnnamedModule());
+            }
 
             ClassField ownerField = serializer.readClass(owner, ClassReader.SKIP_CODE)
               .findField(field.name, field.desc);
@@ -399,7 +401,9 @@ public class CrossClassLoaderHandler implements Handler {
     }
 
     for (Wrapper wrapper : wrappers.values()) {
-      Jigsaw.implAddReads(change.getTargetJavaClass(), wrapper.getOverlappingLoader().getUnnamedModule());
+      if (wrapper.getOverlappingLoader() != null) {
+        Jigsaw.implAddReads(change.getTargetJavaClass(), wrapper.getOverlappingLoader().getUnnamedModule());
+      }
       wrapper.define(serializer);
     }
   }
@@ -408,15 +412,18 @@ public class CrossClassLoaderHandler implements Handler {
     Map<ClassLoader, Wrapper> reflections,
     String name, ClassLoader mapping, ClassLoader target
   ) {
-    ClassLoader intersection = null;
 
-    Set<ClassLoader> targets = this.findParents(target);
-    for (ClassLoader parent : this.findParents(
-      this.findClass(name, mapping, target).getClassLoader()
-    )) {
-      if (targets.contains(parent)) {
-        intersection = parent;
-        break;
+    ClassLoader intersection = target;
+
+    if (target != null) {
+      Set<ClassLoader> targets = this.findParents(target);
+      for (ClassLoader parent : this.findParents(
+        this.findClass(name, mapping, target).getClassLoader()
+      )) {
+        if (targets.contains(parent)) {
+          intersection = parent;
+          break;
+        }
       }
     }
 
@@ -497,9 +504,7 @@ public class CrossClassLoaderHandler implements Handler {
       return Set.of(ClassLoader.getPlatformClassLoader());
     }
 
-    Set<ClassLoader> classLoaders = Collections.newSetFromMap(new IdentityHashMap<>());
-
-    classLoader = classLoader.getParent();
+    Set<ClassLoader> classLoaders = new LinkedHashSet<>();
     while (classLoader != null && classLoaders.add(classLoader)) {
       classLoader = classLoader.getParent();
     }

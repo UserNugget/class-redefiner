@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,13 @@ import io.github.usernugget.redefiner.handlers.Op;
 import io.github.usernugget.redefiner.handlers.types.annotations.Head;
 import io.github.usernugget.tests.redefine.AbstractRedefineTest;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
@@ -31,6 +35,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class CrossClassLoaderTest extends AbstractRedefineTest {
   // Class for ClassLoader A
@@ -125,6 +131,62 @@ public class CrossClassLoaderTest extends AbstractRedefineTest {
       assertEquals(1024, method.invoke(null, true)); // Redefined
       assertEquals(0, method.invoke(null, false)); // Original
     }
+  }
+
+  public static final Charset CHARSET = new Charset("hi", null) {
+    @Override
+    public boolean contains(Charset charset) {
+      return false;
+    }
+
+    @Override
+    public CharsetDecoder newDecoder() {
+      return null;
+    }
+
+    @Override
+    public CharsetEncoder newEncoder() {
+      return null;
+    }
+  };
+
+  public static byte[] getBytes() {
+    return null;
+  }
+
+  @Mapping(targetClass = String.class)
+  public static final class InternalMapping {
+    @Head(method = "getBytes(Ljava/nio/charset/Charset;)[B")
+    void getBytes(Charset charset) {
+      if (charset == CHARSET) {
+        Op.returnOp(CrossClassLoaderTest.getBytes());
+      }
+    }
+  }
+
+  @Test
+  void testInternal() throws ClassNotFoundException {
+    REDEFINER.transformClass(InternalMapping.class);
+    assertNull(" ".getBytes(CHARSET));
+  }
+
+  @Mapping(targetClass = Array.class)
+  public static final class ArrayMapping {
+    @Head
+    static void newInstance(Class<?> componentType, int... length) {
+      if (componentType == null) {
+        Op.returnOp(getBytes());
+      }
+    }
+  }
+
+  @Test
+  void testDifferent() throws ClassNotFoundException {
+    assertThrows(NullPointerException.class, () -> Array.newInstance(null, 0, 0));
+
+    REDEFINER.transformClass(ArrayMapping.class);
+
+    assertEquals(Array.newInstance(null, 0, 0), getBytes());
   }
 
   private static final class FakeClassLoader extends URLClassLoader {
