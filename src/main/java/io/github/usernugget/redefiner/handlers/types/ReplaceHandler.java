@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ public class ReplaceHandler implements Handler {
     ClassMethod target = change.findTargetMethod();
 
     target.instructions = mapping.instructions;
+    target.localVariables = mapping.localVariables;
     target.tryCatchBlocks = mapping.tryCatchBlocks;
   }
 }
