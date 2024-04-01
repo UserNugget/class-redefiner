@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import io.github.usernugget.redefiner.util.asm.Ops;
 import io.github.usernugget.redefiner.util.asm.instruction.Insns;
 import io.github.usernugget.redefiner.util.asm.instruction.immutable.Injected;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 
@@ -31,19 +30,29 @@ public class HeadHandler implements Handler {
   @Override
   public void handleMethod(MethodChange change) {
     ClassMethod mapping = change.getMappingMethod();
-    if (mapping.returnType().getSort() != Type.VOID) {
-      throw new IllegalStateException("mapping method " + mapping + " must be void");
-    }
-
     ClassMethod target = change.findTargetMethod();
 
     LabelNode targetBase = new LabelNode();
 
     Insns mappingCode = mapping.getInstructions();
     for (AbstractInsnNode instruction : mappingCode) {
-      if (instruction.getOpcode() == Opcodes.RETURN &&
-          !(instruction instanceof Injected)) {
-        mappingCode.set(instruction, Ops.jumpOp(Opcodes.GOTO, targetBase));
+      int opcode = instruction.getOpcode();
+      if (opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN && !(instruction instanceof Injected)) {
+        if (opcode == Opcodes.RETURN) {
+          mappingCode.set(instruction, Ops.jumpOp(Opcodes.GOTO, targetBase));
+        } else {
+          Insns injection = new Insns();
+          if (opcode == Opcodes.DRETURN || opcode == Opcodes.LRETURN) {
+            injection.op(Opcodes.POP2);
+          } else {
+            injection.op(Opcodes.POP);
+          }
+
+          injection.jumpOp(Opcodes.GOTO, targetBase);
+
+          mappingCode.insert(instruction, injection);
+          mappingCode.remove(instruction);
+        }
       }
     }
 

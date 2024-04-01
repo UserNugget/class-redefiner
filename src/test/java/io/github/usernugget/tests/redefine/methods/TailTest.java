@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import io.github.usernugget.redefiner.handlers.types.annotations.Tail;
 import io.github.usernugget.tests.redefine.AbstractRedefineTest;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class TailTest extends AbstractRedefineTest {
   public static class PlainClass {
@@ -32,6 +34,14 @@ public class TailTest extends AbstractRedefineTest {
     }
 
     public static int testStatic(boolean value) {
+      return 0;
+    }
+
+    public static Object testReturn(boolean value) {
+      return new Object();
+    }
+
+    public static long testBigStack(boolean value) {
       return 0;
     }
   }
@@ -70,6 +80,32 @@ public class TailTest extends AbstractRedefineTest {
         throw new Error(throwable);
       } finally { }
     }
+
+    @Tail
+    public static Object testReturn(boolean value) {
+      try {
+        if (value) {
+          Op.returnOp(null);
+        }
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
+
+      return null;
+    }
+
+    @Tail
+    public static long testBigStack(boolean value) {
+      try {
+        if (value) {
+          Op.returnOp(1);
+        }
+      } catch (Throwable throwable) {
+        throw new Error(throwable);
+      } finally { }
+
+      return 0;
+    }
   }
 
   @Test
@@ -78,6 +114,12 @@ public class TailTest extends AbstractRedefineTest {
 
     assertEquals(1, PlainClass.testStatic(true)); // Redefined
     assertEquals(0, PlainClass.testStatic(false)); // Original
+
+    assertNull(PlainClass.testReturn(true)); // Redefined
+    assertNotNull(PlainClass.testReturn(false)); // Original
+
+    assertEquals(1, PlainClass.testBigStack(true)); // Redefined
+    assertEquals(0, PlainClass.testBigStack(false)); // Original
 
     PlainClass value = new PlainClass();
     assertEquals(4, value.field); // Redefined

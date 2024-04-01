@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,6 @@ public class TailHandler implements Handler {
   @Override
   public void handleMethod(MethodChange change) {
     ClassMethod mapping = change.getMappingMethod();
-    if (mapping.returnType().getSort() != Type.VOID) {
-      throw new IllegalStateException("mapping method " + mapping + " must be void");
-    }
-
     ClassMethod target = change.findTargetMethod();
 
     Type returnType = target.returnType();
@@ -62,15 +58,15 @@ public class TailHandler implements Handler {
 
     Insns mappingCode = mapping.getInstructions();
     for (AbstractInsnNode instruction : mappingCode) {
-      if (instruction.getOpcode() == Opcodes.RETURN &&
-          !(instruction instanceof Injected)) {
-        Insns ret = new Insns();
+      int opcode = instruction.getOpcode();
+      if (opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN && !(instruction instanceof Injected)) {
+        Insns exit = new Insns();
         if (returnType.getSort() != Type.VOID) {
-          ret.loadOp(returnType, returnVariable);
+          exit.loadOp(returnType, returnVariable);
         }
-        ret.returnOp(returnType);
+        exit.returnOp(returnType);
 
-        mappingCode.insert(instruction, ret);
+        mappingCode.insert(instruction, exit);
         mappingCode.remove(instruction);
       }
     }
