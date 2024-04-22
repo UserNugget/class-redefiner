@@ -26,13 +26,13 @@ import io.github.usernugget.redefiner.util.asm.ClassMethod;
 import io.github.usernugget.redefiner.util.asm.Ops;
 import io.github.usernugget.redefiner.util.asm.instruction.Insns;
 import io.github.usernugget.redefiner.util.asm.io.ClassSerializer;
+import io.github.usernugget.redefiner.util.asm.io.ClassStructureCache;
 import io.github.usernugget.redefiner.util.asm.reflect.Reflection;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -84,8 +84,14 @@ public class CrossClassLoaderHandler implements Handler {
     }
   }
 
+  private ClassStructureCache cache;
+
   @Override
   public void handleMethod(MethodChange change) {
+    if (this.cache == null) {
+      this.cache = new ClassStructureCache(change.getRedefiner().getClassSerializer());
+    }
+
     ClassSerializer serializer = change.getRedefiner().getClassSerializer();
 
     ClassFile mapping = change.getMappingClass();
@@ -146,9 +152,7 @@ public class CrossClassLoaderHandler implements Handler {
               Jigsaw.implAddReads(owner, wrapper.getOverlappingLoader().getUnnamedModule());
             }
 
-            ClassMethod ownerMethod = serializer.readClass(owner, ClassReader.SKIP_CODE)
-              .findMethod(method.name, method.desc);
-
+            ClassMethod ownerMethod = this.cache.readCached(owner).findMethod(method.name, method.desc);
             if (ownerMethod == null) {
               throw new IllegalStateException(
                 "method " + method.owner + "::" + method.name + method.desc +
@@ -177,9 +181,7 @@ public class CrossClassLoaderHandler implements Handler {
               Jigsaw.implAddReads(owner, wrapper.getOverlappingLoader().getUnnamedModule());
             }
 
-            ClassField ownerField = serializer.readClass(owner, ClassReader.SKIP_CODE)
-              .findField(field.name, field.desc);
-
+            ClassField ownerField = this.cache.readCached(owner).findField(field.name, field.desc);
             if (ownerField == null) {
               throw new IllegalStateException(
                 "field " + field.desc + " " + field.owner + "." + field.name +
