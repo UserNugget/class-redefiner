@@ -19,11 +19,6 @@ package io.github.usernugget.redefiner.agent.impl;
 import io.github.usernugget.redefiner.ClassRedefiner;
 import io.github.usernugget.redefiner.agent.AbstractAgent;
 import io.github.usernugget.redefiner.throwables.InitializationException;
-import io.github.usernugget.redefiner.util.asm.ClassField;
-import io.github.usernugget.redefiner.util.asm.ClassFile;
-import io.github.usernugget.redefiner.util.asm.ClassMethod;
-import io.github.usernugget.redefiner.util.asm.Ops;
-import io.github.usernugget.redefiner.util.asm.io.ClassSerializer;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -32,13 +27,7 @@ import java.security.ProtectionDomain;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.InsnNode;
 import static java.util.Objects.requireNonNull;
 
 public class InstrumentationAgent extends AbstractAgent implements ClassFileTransformer {
@@ -64,7 +53,6 @@ public class InstrumentationAgent extends AbstractAgent implements ClassFileTran
   }
 
   private final Queue<Transformation> transformations = new LinkedList<>();
-  private final int capatibilities;
 
   public InstrumentationAgent(Instrumentation instrumentation, ClassRedefiner redefiner) throws InitializationException {
     if (instrumentation == null) {
@@ -74,115 +62,6 @@ public class InstrumentationAgent extends AbstractAgent implements ClassFileTran
     this.redefiner = redefiner;
     this.instrumentation = instrumentation;
     this.instrumentation.addTransformer(this, true);
-
-    this.capatibilities = lookupCapatibilities(redefiner);
-  }
-
-  private interface TmpInterface { }
-  private static final class TmpSuperclass { }
-  private static final class Tmp implements Supplier<Object> {
-    private static int toModify = 1;
-    private static Object toRemove;
-
-    private static int toModify(int a) { return 1; }
-    private static void toRemove() { }
-
-    @Override public Object get() { return null; }
-  }
-
-  // TODO: think about method comparsion under obfuscation
-  protected int lookupCapatibilities(ClassRedefiner redefiner) throws InitializationException {
-    if (!this.instrumentation.isModifiableClass(Tmp.class)) {
-      throw new InitializationException("cannot modify local class");
-    }
-
-    int capatibilities = 0;
-
-    ClassSerializer serializer = redefiner.getClassSerializer();
-
-    if (checkCompatibility(serializer, classFile -> {
-      ClassMethod method = classFile.findMethod("toModify", "(I)I");
-      method.instructions.set(
-         method.instructions.getFirst(),
-         Ops.op(Opcodes.ICONST_0)
-      );
-    })) {
-      capatibilities |= CHANGE_CODE;
-    }
-
-    if (checkCompatibility(serializer, classFile -> {
-      ClassMethod method = classFile.visitMethod(Opcodes.ACC_PUBLIC, "addedMethod", "()V");
-      method.instructions.add(new InsnNode(Opcodes.RETURN));
-    })) {
-      capatibilities |= ADD_METHOD;
-    }
-
-    if (checkCompatibility(serializer, classFile -> {
-      classFile.methods.remove(classFile.findMethod("toRemove", "()V"));
-    })) {
-      capatibilities |= REMOVE_METHOD;
-    }
-
-    if (checkCompatibility(serializer, classFile -> {
-      classFile.findMethod("toModify", "(I)I").name = "modifiedMethod";
-    })) {
-      capatibilities |= CHANGE_METHOD;
-    }
-
-    if (checkCompatibility(serializer, classFile -> {
-      classFile.visitField(Opcodes.ACC_PUBLIC, "addedField", "Ljava/lang/Object;");
-    })) {
-      capatibilities |= ADD_FIELD;
-    }
-
-    if (checkCompatibility(serializer, classFile -> {
-      classFile.fields.remove(classFile.findField("toRemove", "Ljava/lang/Object;"));
-    })) {
-      capatibilities |= REMOVE_FIELD;
-    }
-
-    if (checkCompatibility(serializer, classFile -> {
-      ClassField field = classFile.findField("toModify", "I");
-      field.name = "modifiedField";
-    })) {
-      capatibilities |= CHANGE_FIELD;
-    }
-
-    if (checkCompatibility(serializer, classFile -> {
-      classFile.addInterface(Type.getInternalName(TmpInterface.class));
-    })) {
-      capatibilities |= ADD_INTERACE;
-    }
-
-    if (checkCompatibility(serializer, classFile -> {
-      classFile.removeInterface(Type.getInternalName(Consumer.class));
-    })) {
-      capatibilities |= REMOVE_INTERACE;
-    }
-
-    if (checkCompatibility(serializer, classFile -> {
-      classFile.superName = Type.getInternalName(TmpSuperclass.class);
-    })) {
-      capatibilities |= CHANGE_SUPERCLASS;
-    }
-
-    return capatibilities;
-  }
-
-  private boolean checkCompatibility(ClassSerializer serializer, Consumer<ClassFile> consumer) {
-    try {
-      retransform(Tmp.class, (rawBytecode, classLoader) -> {
-        ClassFile classFile = serializer.readClass(rawBytecode, ClassReader.SKIP_DEBUG);
-        consumer.accept(classFile);
-        return serializer.writeClass(
-          classFile, classLoader, ClassWriter.COMPUTE_FRAMES
-        );
-      });
-
-      return true;
-    } catch (Throwable throwable) {
-      return false;
-    }
   }
 
   /*
@@ -281,7 +160,7 @@ public class InstrumentationAgent extends AbstractAgent implements ClassFileTran
 
   @Override
   public int getCapabilities() {
-    return this.capatibilities;
+    return CHANGE_CODE;
   }
 
   @Override
