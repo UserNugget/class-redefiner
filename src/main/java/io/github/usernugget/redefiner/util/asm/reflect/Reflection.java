@@ -140,17 +140,27 @@ public class Reflection {
 
           Type descType = Type.getType(field.desc);
           switch (descType.getSort()) {
-            case Type.BOOLEAN: type = Boolean.TYPE; break;
-            case Type.CHAR: type = Character.TYPE; break;
-            case Type.BYTE: type = Byte.TYPE; break;
-            case Type.SHORT: type = Short.TYPE; break;
-            case Type.INT: type = Integer.TYPE; break;
-            case Type.FLOAT: type = Float.TYPE; break;
-            case Type.LONG: type = Long.TYPE; break;
-            case Type.DOUBLE: type = Double.TYPE; break;
+            case Type.BOOLEAN:
+            case Type.CHAR:
+            case Type.BYTE:
+            case Type.SHORT:
+            case Type.INT:
+            case Type.FLOAT:
+            case Type.LONG:
+            case Type.DOUBLE: {
+              type = Class.forName("[" + descType.getDescriptor()).getComponentType(); break;
+            }
             case Type.OBJECT: type = Class.forName(descType.getClassName(), false, accessorClassLoader); break;
             case Type.ARRAY: {
-              String arrayName = "[".repeat(descType.getDimensions()) + "L" + descType.getElementType().getClassName() + ";";
+              String elementDesc;
+              Type elementType = descType.getElementType();
+              if (elementType.getSort() >= Type.BOOLEAN && elementType.getSort() <= Type.DOUBLE) {
+                elementDesc = elementType.getDescriptor();
+              } else {
+                elementDesc = "L" + elementType.getClassName() + ";";
+              }
+
+              String arrayName = "[".repeat(descType.getDimensions()) + elementDesc;
               type = Class.forName(arrayName, false, accessorClassLoader);
               break;
             }
