@@ -5,7 +5,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'windows-latest', 'macos-latest', 'ubuntu-latest' ]
+        os: [ 'windows-latest', 'macos-15', 'ubuntu-latest' ]
         java: [ '11', '17', '21' ]
         distribution: [ 'semeru', 'temurin' ]
 
