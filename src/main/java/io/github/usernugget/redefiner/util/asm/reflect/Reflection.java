@@ -185,7 +185,7 @@ public class Reflection {
       }
 
       System.getProperties().put(this.propertyName, accessorClass.getDeclaredConstructor().newInstance());
-      JavaInternals.TRUSTED.ensureInitialized(interfaceClass);
+      interfaceClass.getField("IMPL").get(null); // initialize interface
       System.getProperties().remove(this.propertyName);
       for (Entry<ClassField, Prop> entry : this.props.entrySet()) {
         System.getProperties().remove(this.propertyPrefix + "." + entry.getKey().name);
