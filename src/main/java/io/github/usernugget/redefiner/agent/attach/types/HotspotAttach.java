@@ -86,10 +86,8 @@ public class HotspotAttach extends AbstractAttach {
         attributes.putValue("Can-Retransform-Classes", "true");
         attributes.putValue("Can-Redefine-Classes", "true");
 
-        attributes.putValue("Agent-Class", className.replace('/', '.'));
-
         // Used by InstrumentationImpl::loadAgent
-        attributes.putValue("Launcher-Agent-Class", attributes.getValue("Agent-Class"));
+        attributes.putValue("Launcher-Agent-Class", className.replace('/', '.'));
 
         // some magic here
         new JarOutputStream(Files.newOutputStream(tmpFile), manifest).close();
