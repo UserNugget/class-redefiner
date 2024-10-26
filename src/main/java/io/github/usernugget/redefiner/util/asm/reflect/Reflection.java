@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,41 +25,42 @@ import io.github.usernugget.redefiner.util.asm.instruction.Insns;
 import io.github.usernugget.redefiner.util.asm.io.ClassSerializer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 public class Reflection {
   private static final Pattern ILLEGAL_NAME_CHARACTERS = Pattern.compile("[.;\\[/<>]");
-
   private static final String CURRENT_CLASS_NAME = Type.getInternalName(Reflection.class);
-  private static final MethodHandle WRAP_CLASS_LOADER;
 
-  static {
-    try {
-      WRAP_CLASS_LOADER = JavaInternals.TRUSTED.findConstructor(
-        Class.forName(
-          "jdk.internal.reflect.DelegatingClassLoader",
-          false,
-          ClassLoader.getPlatformClassLoader()
-        ),
-        MethodType.methodType(void.class, ClassLoader.class)
-      );
-    } catch (Throwable throwable) {
-      throw new ExceptionInInitializerError(throwable);
+  private enum AccessorType {
+    SET, GET, INVOKE
+  }
+
+  private static final class Prop {
+
+    private final AccessorType type;
+    private final AccessFlags flags;
+
+    public Prop(AccessorType type, AccessFlags flags) {
+      this.type = type;
+      this.flags = flags;
     }
   }
 
   private final Map<AccessFlags, ClassMethod> reflections = new HashMap<>();
+  private final Map<ClassField, Prop> props = new HashMap<>();
 
   private final ClassFile targetClass;
+  private final ClassMethod targetClassInit;
   private final ClassFile targetInterface;
   private final ClassField implField;
+  private final String propertyPrefix;
+  private final String propertyName;
+  private int accessorIndex;
 
   public Reflection() {
     String classId = ClassFile.generateClassEnding();
@@ -72,7 +73,7 @@ public class Reflection {
     this.targetClass = new ClassFile(
       Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
       CURRENT_CLASS_NAME + "$ClassGen_" + classId,
-      "jdk/internal/reflect/MagicAccessorImpl", this.targetInterface.name
+      "java/lang/Object", this.targetInterface.name
     );
 
     this.targetClass.visitSimpleInitializer();
@@ -81,6 +82,23 @@ public class Reflection {
       Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,
       "IMPL", 'L' + this.targetInterface.name + ';'
     );
+
+    // TODO: use other storage to store cross-classloader instance?
+    this.propertyPrefix = classId + "-redefiner";
+    this.propertyName = this.propertyPrefix + ".initialized";
+
+    ClassMethod clinit = this.targetInterface.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V");
+    Insns insns = clinit.getInstructions();
+
+    // IMPL = (<interface name>) System.getProperties().get(<property name>);
+    insns.methodOp(Opcodes.INVOKESTATIC, "java/lang/System", "getProperties", "()Ljava/util/Properties;", false);
+    insns.ldc(this.propertyName);
+    insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/util/Properties", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
+    insns.typeOp(Opcodes.CHECKCAST, this.targetInterface.name);
+    insns.fieldSetter(this.implField);
+    insns.op(Opcodes.RETURN);
+
+    this.targetClassInit = this.targetClass.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V");
   }
 
   public Map<AccessFlags, ClassMethod> getReflections() {
@@ -99,44 +117,80 @@ public class Reflection {
     return this.implField;
   }
 
-  protected ClassLoader wrapClassLoader(ClassLoader classLoader) {
-    try {
-      return (ClassLoader) WRAP_CLASS_LOADER.invoke(classLoader);
-    } catch (Throwable e) {
-      throw new IllegalStateException("unable to create DelegatingClassLoader", e);
-    }
-  }
-
   public void defineClasses(
     ClassSerializer serializer,
     ClassLoader interfaceClassLoader,
     ClassLoader accessorClassLoader
   ) {
-    Class<?> interfaceClass = serializer.defineClass(
-      this.targetInterface, interfaceClassLoader
-    );
+    this.targetClassInit.getInstructions().op(Opcodes.RETURN);
 
-    Class<?> accessorClass = serializer.defineClass(
-      this.targetClass, wrapClassLoader(accessorClassLoader)
-    );
+    Class<?> interfaceClass = serializer.defineClass(this.targetInterface, interfaceClassLoader);
+    Class<?> accessorClass = serializer.defineClass(this.targetClass, accessorClassLoader);
 
     try {
-      Field field = interfaceClass.getDeclaredField("IMPL");
-      if (!Modifier.isStatic(field.getModifiers())) {
-        throw new IllegalStateException("(internal) IMPL field should be static");
+      for (Entry<ClassField, Prop> entry : this.props.entrySet()) {
+        String propName = this.propertyPrefix + "." + entry.getKey().name;
+        Prop prop = entry.getValue();
+
+        MethodHandle handle = null;
+        if (prop.flags instanceof ClassField) {
+          ClassField field = (ClassField) prop.flags;
+          Class<?> owner = Class.forName(field.owner.name.replace('/', '.'), false, accessorClassLoader);
+          Class<?> type = Object.class;
+
+          Type descType = Type.getType(field.desc);
+          switch (descType.getSort()) {
+            case Type.BOOLEAN: type = Boolean.TYPE; break;
+            case Type.CHAR: type = Character.TYPE; break;
+            case Type.BYTE: type = Byte.TYPE; break;
+            case Type.SHORT: type = Short.TYPE; break;
+            case Type.INT: type = Integer.TYPE; break;
+            case Type.FLOAT: type = Float.TYPE; break;
+            case Type.LONG: type = Long.TYPE; break;
+            case Type.DOUBLE: type = Double.TYPE; break;
+            case Type.OBJECT: type = Class.forName(descType.getClassName(), false, accessorClassLoader); break;
+            case Type.ARRAY: {
+              String arrayName = "[".repeat(descType.getDimensions()) + "L" + descType.getElementType().getClassName() + ";";
+              type = Class.forName(arrayName, false, accessorClassLoader);
+              break;
+            }
+          }
+
+          if (field.isStatic()) {
+            handle = prop.type == AccessorType.GET ?
+                     JavaInternals.TRUSTED.findStaticGetter(owner, field.name, type) :
+                     JavaInternals.TRUSTED.findStaticSetter(owner, field.name, type);
+          } else {
+            handle = prop.type == AccessorType.GET ?
+                     JavaInternals.TRUSTED.findGetter(owner, field.name, type) :
+                     JavaInternals.TRUSTED.findSetter(owner, field.name, type);
+          }
+        } else if (prop.flags instanceof ClassMethod) {
+          ClassMethod method = (ClassMethod) prop.flags;
+          Class<?> owner = Class.forName(method.owner.name.replace('/', '.'), false, accessorClassLoader);
+
+          if (method.isStatic()) {
+            handle = JavaInternals.TRUSTED.findStatic(owner, method.name,
+              MethodType.fromMethodDescriptorString(method.desc, accessorClassLoader));
+          } else if (method.isSpecial()) {
+            handle = JavaInternals.TRUSTED.findConstructor(owner,
+              MethodType.fromMethodDescriptorString(method.desc, accessorClassLoader));
+          } else {
+            handle = JavaInternals.TRUSTED.findVirtual(owner, method.name,
+              MethodType.fromMethodDescriptorString(method.desc, accessorClassLoader));
+          }
+        }
+
+        System.getProperties().put(propName, handle);
       }
 
-      if (field.getType() != interfaceClass) {
-        throw new IllegalStateException("(internal) IMPL has an invalid type");
+      System.getProperties().put(this.propertyName, accessorClass.getDeclaredConstructor().newInstance());
+      JavaInternals.TRUSTED.ensureInitialized(interfaceClass);
+      System.getProperties().remove(this.propertyName);
+      for (Entry<ClassField, Prop> entry : this.props.entrySet()) {
+        System.getProperties().remove(this.propertyPrefix + "." + entry.getKey().name);
       }
-
-      JavaInternals.UNSAFE.putObject(
-        JavaInternals.UNSAFE.staticFieldBase(field),
-        JavaInternals.UNSAFE.staticFieldOffset(field),
-        accessorClass.getDeclaredConstructor().newInstance()
-      );
-    } catch (InstantiationException | NoSuchFieldException | NoSuchMethodException |
-             IllegalAccessException | InvocationTargetException e) {
+    } catch (Throwable e) {
       throw new IllegalStateException(e);
     }
   }
@@ -193,7 +247,7 @@ public class Reflection {
     );
   }
 
-  protected void loadAndInvoke(ClassMethod wrapper, ClassMethod targetMethod) {
+  protected void load(ClassMethod wrapper, ClassMethod targetMethod) {
     Insns insns = wrapper.getInstructions();
     int varOffset = wrapper.isStatic() ? 0 : 1;
     for (Type type : Type.getArgumentTypes(wrapper.desc)) {
@@ -201,13 +255,34 @@ public class Reflection {
       varOffset += type.getSort() == Type.LONG ||
                    type.getSort() == Type.DOUBLE ? 2 : 1;
     }
+  }
 
+  protected void loadAndInvoke(ClassMethod wrapper, ClassMethod targetMethod) {
+    this.load(wrapper, targetMethod);
+
+    Insns insns = wrapper.getInstructions();
     insns.invoke(targetMethod);
     insns.returnOp(Type.getReturnType(targetMethod.desc));
   }
 
   protected ClassMethod findWrapper(String name, String desc) {
     return this.targetInterface.findMethod(name, desc);
+  }
+
+  private ClassField createMethodHandle() {
+    String mhFieldName = "MH_" + this.accessorIndex++;
+    ClassField mhField = this.targetClass.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,
+        mhFieldName, "Ljava/lang/invoke/MethodHandle;");
+
+    // <field> = (MethodHandle) System.getProperties().get(<name>);
+    Insns insns = this.targetClassInit.getInstructions();
+    insns.methodOp(Opcodes.INVOKESTATIC, "java/lang/System", "getProperties", "()Ljava/util/Properties;", false);
+    insns.ldc(this.propertyPrefix + "." + mhField.name);
+    insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/util/Properties", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
+    insns.typeOp(Opcodes.CHECKCAST, "java/lang/invoke/MethodHandle");
+    insns.fieldSetter(mhField);
+
+    return mhField;
   }
 
   public ClassMethod wrapSetter(ClassField field) {
@@ -228,12 +303,33 @@ public class Reflection {
     Insns insns = wrapper.getInstructions();
 
     Type type = Type.getType(field.desc);
-    if (!field.isStatic()) {
-      int varOffset = wrapper.isStatic() ? 0 : 1;
-      insns.varOp(Opcodes.ALOAD, varOffset);
-      insns.loadOp(type, varOffset + 1);
+    if (field.isPublic()) {
+      if (!field.isStatic()) {
+        int varOffset = wrapper.isStatic() ? 0 : 1;
+        insns.varOp(Opcodes.ALOAD, varOffset);
+        insns.loadOp(type, varOffset + 1);
+      }
+
+      insns.fieldSetter(field);
+    } else {
+      ClassField fieldAccessor = this.createMethodHandle();
+      this.props.put(fieldAccessor, new Prop(AccessorType.SET, field));
+
+      insns.fieldGetter(fieldAccessor);
+
+      if (field.isStatic()) {
+        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+          "invokeExact", "(" + type.getDescriptor() + ")V", false);
+      } else {
+        int varOffset = wrapper.isStatic() ? 0 : 1;
+        insns.varOp(Opcodes.ALOAD, varOffset);
+        insns.loadOp(type, varOffset + 1);
+
+        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+          "invokeExact", "(L" + field.owner.name + ";" + type.getDescriptor() + ")V", false);
+      }
     }
-    insns.fieldSetter(field);
+
     insns.returnOp(type);
 
     return this.findWrapper(name, desc);
@@ -256,10 +352,28 @@ public class Reflection {
     ClassMethod internalWrapper = this.createWrapper(field, name, desc);
     Insns insns = internalWrapper.getInstructions();
 
-    if (!field.isStatic()) {
-      insns.varOp(Opcodes.ALOAD, internalWrapper.isStatic() ? 0 : 1);
+    if (field.isPublic()) {
+      if (!field.isStatic()) {
+        insns.varOp(Opcodes.ALOAD, internalWrapper.isStatic() ? 0 : 1);
+      }
+
+      insns.fieldGetter(field);
+    } else {
+      ClassField fieldAccessor = this.createMethodHandle();
+      this.props.put(fieldAccessor, new Prop(AccessorType.GET, field));
+
+      insns.fieldGetter(fieldAccessor);
+
+      if (field.isStatic()) {
+        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+          "invokeExact", "()" + field.desc, false);
+      } else {
+        insns.varOp(Opcodes.ALOAD, internalWrapper.isStatic() ? 0 : 1);
+        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+          "invokeExact", "(L" + field.owner.name + ";)" + field.desc, false);
+      }
     }
-    insns.fieldGetter(field);
+
     insns.returnOp(field.desc);
 
     return this.findWrapper(name, desc);
@@ -282,7 +396,25 @@ public class Reflection {
     ClassMethod internalWrapper = this.createWrapper(method, name, desc);
     Insns insns = internalWrapper.getInstructions();
 
-    this.loadAndInvoke(internalWrapper, method);
+    if (method.isPublic()) {
+      this.loadAndInvoke(internalWrapper, method);
+    } else {
+      ClassField methodAccessor = this.createMethodHandle();
+      this.props.put(methodAccessor, new Prop(AccessorType.INVOKE, method));
+
+      insns.fieldGetter(methodAccessor);
+      this.load(internalWrapper, method);
+      if (method.isStatic()) {
+        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+          "invokeExact", method.desc, false);
+      } else {
+        String accessorDesc = "(L" + method.owner.name + ';' + method.desc.substring(1);
+        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+          "invokeExact", accessorDesc, false);
+      }
+
+      insns.returnOp(Type.getReturnType(method.desc));
+    }
 
     return this.findWrapper(name, desc);
   }

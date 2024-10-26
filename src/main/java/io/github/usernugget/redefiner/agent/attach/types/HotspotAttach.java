@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 UserNugget/class-redefiner
+ * Copyright (C) 2024 UserNugget/class-redefiner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,12 @@ public class HotspotAttach extends AbstractAttach {
 
     attachAgent(className);
 
-    Object instrumentation = JavaInternals.UNSAFE.getObject(
-       JavaInternals.UNSAFE.staticFieldBase(instrumentationField),
-       JavaInternals.UNSAFE.staticFieldOffset(instrumentationField)
-    );
+    Object instrumentation;
+    try {
+      instrumentation = instrumentationField.get(null);
+    } catch (IllegalAccessException e) {
+      throw new InitializationException("failed to get access field", e);
+    }
 
     if (instrumentation == null) {
       throw new InitializationException("attachAgent is called, but instrumentation is null");

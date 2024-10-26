@@ -18,9 +18,11 @@ package io.github.usernugget.redefiner.util;
 
 import io.github.usernugget.redefiner.util.asm.ClassFile;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import sun.misc.Unsafe;
+import sun.reflect.ReflectionFactory;
 
 public class JavaInternals {
   public static final double JAVA_VERSION;
@@ -39,11 +41,11 @@ public class JavaInternals {
       unsafeField.setAccessible(true);
       UNSAFE = (Unsafe) unsafeField.get(null);
 
-      Field trustedLookup = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
-      TRUSTED = (MethodHandles.Lookup) UNSAFE.getObject(
-         UNSAFE.staticFieldBase(trustedLookup),
-         UNSAFE.staticFieldOffset(trustedLookup)
-      );
+      MethodHandles.Lookup internalLookup = (MethodHandles.Lookup) ReflectionFactory.getReflectionFactory()
+        .newConstructorForSerialization(MethodHandles.Lookup.class, MethodHandles.Lookup.class.getDeclaredConstructor(Class.class))
+        .newInstance(MethodHandles.Lookup.class);
+
+      TRUSTED = (Lookup) internalLookup.findStaticGetter(Lookup.class, "IMPL_LOOKUP", Lookup.class).invoke();
 
       Class<?> unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
       Jigsaw.implAddExports(unsafeClass, JavaInternals.class.getModule());
@@ -71,6 +73,8 @@ public class JavaInternals {
          classBytes, 0, classBytes.length,
          classLoader, null
       );
+    } catch (IllegalAccessError e) {
+      throw e;
     } catch (Throwable e) {
       throw new IllegalStateException("failed to define class " + classFile.name + ":\n" + classFile.toReadableBytecode(), e);
     }
