@@ -19,16 +19,24 @@ package io.github.usernugget.tests.redefine.methods.internals;
 import io.github.usernugget.redefiner.Mapping;
 import io.github.usernugget.redefiner.handlers.Op;
 import io.github.usernugget.redefiner.handlers.types.annotations.Head;
+import io.github.usernugget.redefiner.util.JavaInternals;
 import io.github.usernugget.tests.redefine.AbstractRedefineTest;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@DisabledIf("shouldIgnore") // OpenJ9 for Java 11 doesnt allow MethodHandle to access private fields
 public class CallerTest extends AbstractRedefineTest {
+
+  static boolean shouldIgnore() {
+    return JavaInternals.JAVA_VERSION == 11 &&
+      System.getProperty("java.vendor").toLowerCase().contains("ibm corporation");
+  }
 
   public static final CallerTest INSTANCE = new CallerTest();
   public static final Charset CHARSET = new Charset("test", new String[0]) {
