@@ -41,11 +41,22 @@ public class JavaInternals {
       unsafeField.setAccessible(true);
       UNSAFE = (Unsafe) unsafeField.get(null);
 
-      MethodHandles.Lookup internalLookup = (MethodHandles.Lookup) ReflectionFactory.getReflectionFactory()
-        .newConstructorForSerialization(MethodHandles.Lookup.class, MethodHandles.Lookup.class.getDeclaredConstructor(Class.class))
-        .newInstance(MethodHandles.Lookup.class);
+      if (JAVA_VERSION >= 21) {
+        MethodHandles.Lookup internalLookup = (MethodHandles.Lookup) ReflectionFactory.getReflectionFactory()
+          .newConstructorForSerialization(
+            MethodHandles.Lookup.class,
+            MethodHandles.Lookup.class.getDeclaredConstructor(Class.class)
+          ).newInstance(MethodHandles.Lookup.class);
 
-      TRUSTED = (Lookup) internalLookup.findStaticGetter(Lookup.class, "IMPL_LOOKUP", Lookup.class).invoke();
+        TRUSTED = (Lookup) internalLookup.findStaticGetter(
+          Lookup.class, "IMPL_LOOKUP", Lookup.class).invoke();
+      } else {
+        Field implLookup = Lookup.class.getDeclaredField("IMPL_LOOKUP");
+        TRUSTED = (Lookup) UNSAFE.getObject(
+          UNSAFE.staticFieldBase(implLookup),
+          UNSAFE.staticFieldOffset(implLookup)
+        );
+      }
 
       Class<?> unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
       Jigsaw.implAddExports(unsafeClass, JavaInternals.class.getModule());
