@@ -84,6 +84,8 @@ public class CrossClassLoaderHandler implements Handler {
     }
   }
 
+  private final String wrapperEnding = ClassFile.generateClassEnding();
+
   private ClassStructureCache cache;
 
   @Override
@@ -236,24 +238,30 @@ public class CrossClassLoaderHandler implements Handler {
               wrappers, target.name, mappingLoader, targetLoader
             );
 
-            ClassMethod wrappedType = wrapper.code.visitMethod(
-              Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-              Reflection.escapeName("InvokeDynamic_" + ClassFile.generateClassEnding()),
-              invokeDynamic.desc
-            );
+            String methodName = Reflection.escapeName("InvokeDynamic_" + this.wrapperEnding);
+            String methodDesc = invokeDynamic.desc;
 
-            Type descType = Type.getType(invokeDynamic.desc);
-            Insns code = wrappedType.getInstructions();
+            ClassMethod wrappedType = wrapper.code.findMethod(methodName, methodDesc);
+            if (wrappedType == null) {
+              wrappedType = wrapper.code.visitMethod(
+                  Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                  methodName,
+                  methodDesc
+              );
 
-            int index = 0;
-            for (Type argumentType : descType.getArgumentTypes()) {
-              code.loadOp(argumentType, index);
-              index += argumentType.getSort() == Type.DOUBLE ||
-                       argumentType.getSort() == Type.LONG ? 2 : 1;
+              Type descType = Type.getType(invokeDynamic.desc);
+              Insns code = wrappedType.getInstructions();
+
+              int index = 0;
+              for (Type argumentType : descType.getArgumentTypes()) {
+                code.loadOp(argumentType, index);
+                index += argumentType.getSort() == Type.DOUBLE ||
+                    argumentType.getSort() == Type.LONG ? 2 : 1;
+              }
+
+              code.add(invokeDynamic.clone(null));
+              code.returnOp(descType.getReturnType());
             }
-
-            code.add(invokeDynamic.clone(null));
-            code.returnOp(descType.getReturnType());
 
             mappingCode.set(
               instruction,
@@ -272,29 +280,22 @@ public class CrossClassLoaderHandler implements Handler {
               className = type.getInternalName();
             }
 
-            if (!this.interactable(
-              className, target,
-              accessibleLoaders,
-              mappingLoader, targetLoader
-            )) {
-              Wrapper wrapper = this.findWrapper(
-                wrappers, target.name, mappingLoader, targetLoader
-              );
+            if (!this.interactable(className, target, accessibleLoaders, mappingLoader, targetLoader)) {
+              Wrapper wrapper = this.findWrapper(wrappers, target.name, mappingLoader, targetLoader);
 
-              ClassMethod wrappedType = wrapper.code.visitMethod(
-                Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-                Reflection.escapeName("ClassType_" + type.getInternalName()),
-                "()Ljava/lang/Class;"
-              );
+              String methodName = Reflection.escapeName("ClassType_" + type.getInternalName());
+              String methodDesc = "()Ljava/lang/Class;";
 
-              Insns code = wrappedType.getInstructions();
-              code.ldc(type);
-              code.op(Opcodes.ARETURN);
+              ClassMethod wrappedType = wrapper.code.findMethod(methodName, methodDesc);
+              if (wrappedType == null) {
+                wrappedType = wrapper.code.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, methodName, methodDesc);
 
-              mappingCode.set(
-                instruction,
-                Ops.invoke(wrapper.reflection.wrapMethod(wrappedType))
-              );
+                Insns code = wrappedType.getInstructions();
+                code.ldc(type);
+                code.op(Opcodes.ARETURN);
+              }
+
+              mappingCode.set(instruction, Ops.invoke(wrapper.reflection.wrapMethod(wrappedType)));
             }
           }
 
@@ -318,37 +319,43 @@ public class CrossClassLoaderHandler implements Handler {
 
             ClassMethod wrappedType;
             if (type.getOpcode() == Opcodes.ANEWARRAY) {
-              wrappedType = wrapper.code.visitMethod(
-                Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-                Reflection.escapeName("ArrayType_" + type.desc),
-                "(I)[L" + type.desc + ';'
-              );
+              String methodName = Reflection.escapeName("ArrayType_" + type.desc);
+              String methodDesc = "(I)[L" + type.desc + ';';
 
-              Insns code = wrappedType.getInstructions();
-              code.varOp(Opcodes.ILOAD, 0);
-              code.typeOp(type.getOpcode(), type.desc);
-              code.op(Opcodes.ARETURN);
+              wrappedType = wrapper.code.findMethod(methodName, methodDesc);
+              if (wrappedType == null) {
+                wrappedType = wrapper.code.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, methodName, methodDesc);
+
+                Insns code = wrappedType.getInstructions();
+                code.varOp(Opcodes.ILOAD, 0);
+                code.typeOp(type.getOpcode(), type.desc);
+                code.op(Opcodes.ARETURN);
+              }
             } else if (type.getOpcode() == Opcodes.NEW) {
-              wrappedType = wrapper.code.visitMethod(
-                Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-                Reflection.escapeName("NewType_" + type.desc),
-                "()L" + type.desc + ';'
-              );
+              String methodName = Reflection.escapeName("NewType_" + type.desc);
+              String methodDesc = "()L" + type.desc + ';';
 
-              Insns code = wrappedType.getInstructions();
-              code.typeOp(type.getOpcode(), type.desc);
-              code.op(Opcodes.ARETURN);
+              wrappedType = wrapper.code.findMethod(methodName, methodDesc);
+              if (wrappedType == null) {
+                wrappedType = wrapper.code.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, methodName, methodDesc);
+
+                Insns code = wrappedType.getInstructions();
+                code.typeOp(type.getOpcode(), type.desc);
+                code.op(Opcodes.ARETURN);
+              }
             } else if (type.getOpcode() == Opcodes.CHECKCAST) {
-              wrappedType = wrapper.code.visitMethod(
-                Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-                Reflection.escapeName("TypeCheckCast_" + type.desc),
-                "(Ljava/lang/Object;)Ljava/lang/Object;"
-              );
+              String methodName = Reflection.escapeName("TypeCheckCast_" + type.desc);
+              String methodDesc = "(Ljava/lang/Object;)Ljava/lang/Object;";
 
-              Insns code = wrappedType.getInstructions();
-              code.varOp(Opcodes.ALOAD, 0);
-              code.typeOp(type.getOpcode(), type.desc);
-              code.op(Opcodes.ARETURN);
+              wrappedType = wrapper.code.findMethod(methodName, methodDesc);
+              if (wrappedType == null) {
+                wrappedType = wrapper.code.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, methodName, methodDesc);
+
+                Insns code = wrappedType.getInstructions();
+                code.varOp(Opcodes.ALOAD, 0);
+                code.typeOp(type.getOpcode(), type.desc);
+                code.op(Opcodes.ARETURN);
+              }
             } else {
               continue;
             }
@@ -374,20 +381,22 @@ public class CrossClassLoaderHandler implements Handler {
 
             int dimensions = type.getDimensions();
 
-            ClassMethod wrappedType = wrapper.code.visitMethod(
-              Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-              Reflection.escapeName("MultiANewArray_" + array.desc),
-              "(" + "I".repeat(dimensions) + ")" + array.desc
-            );
+            String methodName = Reflection.escapeName("MultiANewArray_" + array.desc);
+            String methodDesc = "(" + "I".repeat(dimensions) + ")" + array.desc;
 
-            Insns code = wrappedType.getInstructions();
+            ClassMethod wrappedType = wrapper.code.findMethod(methodName, methodDesc);
+            if (wrappedType == null) {
+              wrappedType = wrapper.code.visitMethod(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, methodName, methodDesc);
 
-            for (int index = 0; index < dimensions; index++) {
-              code.varOp(Opcodes.ILOAD, index);
+              Insns code = wrappedType.getInstructions();
+
+              for (int index = 0; index < dimensions; index++) {
+                code.varOp(Opcodes.ILOAD, index);
+              }
+
+              code.add(new MultiANewArrayInsnNode(array.desc, array.dims));
+              code.op(Opcodes.ARETURN);
             }
-
-            code.add(new MultiANewArrayInsnNode(array.desc, array.dims));
-            code.op(Opcodes.ARETURN);
 
             mappingCode.set(
               instruction,

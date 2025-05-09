@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+// TODO: MethodHandle's wrappers don't have proper access to private classes.
 public class Reflection {
   private static final Pattern ILLEGAL_NAME_CHARACTERS = Pattern.compile("[.;\\[/<>]");
   private static final String CURRENT_CLASS_NAME = Type.getInternalName(Reflection.class);
@@ -201,7 +202,7 @@ public class Reflection {
         System.getProperties().remove(this.propertyPrefix + "." + entry.getKey().name);
       }
     } catch (Throwable e) {
-      throw new IllegalStateException(e);
+      throw new IllegalStateException(targetClass.toReadableBytecode(), e);
     }
   }
 
@@ -313,34 +314,28 @@ public class Reflection {
     Insns insns = wrapper.getInstructions();
 
     Type type = Type.getType(field.desc);
-    if (field.isPublic()) {
-      if (!field.isStatic()) {
-        int varOffset = wrapper.isStatic() ? 0 : 1;
-        insns.varOp(Opcodes.ALOAD, varOffset);
-        insns.loadOp(type, varOffset + 1);
-      }
+    ClassField fieldAccessor = this.createMethodHandle();
+    this.props.put(fieldAccessor, new Prop(AccessorType.SET, field));
 
-      insns.fieldSetter(field);
+    insns.fieldGetter(fieldAccessor);
+
+    int varOffset = wrapper.isStatic() ? 0 : 1;
+    if (!field.isStatic()) {
+      insns.varOp(Opcodes.ALOAD, varOffset);
+      insns.loadOp(type, varOffset + 1);
     } else {
-      ClassField fieldAccessor = this.createMethodHandle();
-      this.props.put(fieldAccessor, new Prop(AccessorType.SET, field));
-
-      insns.fieldGetter(fieldAccessor);
-
-      if (field.isStatic()) {
-        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
-          "invokeExact", "(" + type.getDescriptor() + ")V", false);
-      } else {
-        int varOffset = wrapper.isStatic() ? 0 : 1;
-        insns.varOp(Opcodes.ALOAD, varOffset);
-        insns.loadOp(type, varOffset + 1);
-
-        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
-          "invokeExact", "(L" + field.owner.name + ";" + type.getDescriptor() + ")V", false);
-      }
+      insns.loadOp(type, varOffset);
     }
 
-    insns.returnOp(type);
+    if (field.isStatic()) {
+      insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+        "invokeExact", "(" + type.getDescriptor() + ")V", false);
+    } else {
+      insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+        "invokeExact", "(L" + field.owner.name + ";" + type.getDescriptor() + ")V", false);
+    }
+
+    insns.op(Opcodes.RETURN);
 
     return this.findWrapper(name, desc);
   }
@@ -362,26 +357,18 @@ public class Reflection {
     ClassMethod internalWrapper = this.createWrapper(field, name, desc);
     Insns insns = internalWrapper.getInstructions();
 
-    if (field.isPublic()) {
-      if (!field.isStatic()) {
-        insns.varOp(Opcodes.ALOAD, internalWrapper.isStatic() ? 0 : 1);
-      }
+    ClassField fieldAccessor = this.createMethodHandle();
+    this.props.put(fieldAccessor, new Prop(AccessorType.GET, field));
 
-      insns.fieldGetter(field);
+    insns.fieldGetter(fieldAccessor);
+
+    if (field.isStatic()) {
+      insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+        "invokeExact", "()" + field.desc, false);
     } else {
-      ClassField fieldAccessor = this.createMethodHandle();
-      this.props.put(fieldAccessor, new Prop(AccessorType.GET, field));
-
-      insns.fieldGetter(fieldAccessor);
-
-      if (field.isStatic()) {
-        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
-          "invokeExact", "()" + field.desc, false);
-      } else {
-        insns.varOp(Opcodes.ALOAD, internalWrapper.isStatic() ? 0 : 1);
-        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
-          "invokeExact", "(L" + field.owner.name + ";)" + field.desc, false);
-      }
+      insns.varOp(Opcodes.ALOAD, internalWrapper.isStatic() ? 0 : 1);
+      insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+        "invokeExact", "(L" + field.owner.name + ";)" + field.desc, false);
     }
 
     insns.returnOp(field.desc);
@@ -406,25 +393,21 @@ public class Reflection {
     ClassMethod internalWrapper = this.createWrapper(method, name, desc);
     Insns insns = internalWrapper.getInstructions();
 
-    if (method.isPublic()) {
-      this.loadAndInvoke(internalWrapper, method);
+    ClassField methodAccessor = this.createMethodHandle();
+    this.props.put(methodAccessor, new Prop(AccessorType.INVOKE, method));
+
+    insns.fieldGetter(methodAccessor);
+    this.load(internalWrapper, method);
+    if (method.isStatic()) {
+      insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+        "invokeExact", method.desc, false);
     } else {
-      ClassField methodAccessor = this.createMethodHandle();
-      this.props.put(methodAccessor, new Prop(AccessorType.INVOKE, method));
-
-      insns.fieldGetter(methodAccessor);
-      this.load(internalWrapper, method);
-      if (method.isStatic()) {
-        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
-          "invokeExact", method.desc, false);
-      } else {
-        String accessorDesc = "(L" + method.owner.name + ';' + method.desc.substring(1);
-        insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
-          "invokeExact", accessorDesc, false);
-      }
-
-      insns.returnOp(Type.getReturnType(method.desc));
+      String accessorDesc = "(L" + method.owner.name + ';' + method.desc.substring(1);
+      insns.methodOp(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle",
+        "invokeExact", accessorDesc, false);
     }
+
+    insns.returnOp(Type.getReturnType(method.desc));
 
     return this.findWrapper(name, desc);
   }

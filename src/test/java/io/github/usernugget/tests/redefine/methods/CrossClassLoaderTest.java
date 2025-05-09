@@ -19,20 +19,14 @@ package io.github.usernugget.tests.redefine.methods;
 import io.github.usernugget.redefiner.Mapping;
 import io.github.usernugget.redefiner.handlers.Op;
 import io.github.usernugget.redefiner.handlers.types.annotations.Head;
+import io.github.usernugget.tests.loader.FakeClassLoader;
 import io.github.usernugget.tests.redefine.AbstractRedefineTest;
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.function.Function;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -187,29 +181,5 @@ public class CrossClassLoaderTest extends AbstractRedefineTest {
     REDEFINER.transformClass(ArrayMapping.class);
 
     assertEquals(Array.newInstance(null, 0, 0), getBytes());
-  }
-
-  private static final class FakeClassLoader extends URLClassLoader {
-    public FakeClassLoader(String name, URL klass, ClassLoader parent) throws Throwable {
-      super(makeJar(name, klass), parent);
-    }
-
-    private static URL[] makeJar(String name, URL klass) throws Throwable {
-      Path path = Files.createTempFile("class-redefiner-test", ".jar");
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-        try {
-          Files.deleteIfExists(path);
-        } catch (IOException e) {
-          throw new IllegalStateException("failed to remove temp file", e);
-        }
-      }));
-
-      try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(path))) {
-        jos.putNextEntry(new JarEntry(name.replace('.', '/') + ".class"));
-        klass.openConnection().getInputStream().transferTo(jos);
-      }
-
-      return new URL[] { path.toUri().toURL() };
-    }
   }
 }

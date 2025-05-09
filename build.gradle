@@ -37,7 +37,10 @@ allprojects {
     // Test without attach mechanism and dynamic agent loading
     var arguments = [
       '-XX:+DisableAttachMechanism',
-      '-XX:-EnableDynamicAgentLoading'
+      '-XX:-EnableDynamicAgentLoading',
+      '-XX:+UnlockDiagnosticVMOptions',
+      '-XX:+BytecodeVerificationRemote',
+      '-XX:+BytecodeVerificationLocal' // enable additional bytecode validation
     ]
 
     // TODO: find a way to avoid this check on latest OpenJ9
